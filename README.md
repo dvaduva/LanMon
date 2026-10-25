@@ -4,7 +4,7 @@ Aplicație web pentru rețeaua de acasă: descoperă dispozitivele, arată dacă
 organizează pe camere și le pornește prin Wake-on-LAN. Rulează ca un singur container Docker pe
 QNAP, accesat din afară prin Tailscale. Specificația completă e în `docs/`.
 
-Stare: **Faza 1** (descoperire ARP și status prin ping, fără interfață web încă).
+Stare: **Faza 2** (login, dashboard pe camere, Neasignate, administrare camere și tipuri).
 
 ## Dezvoltare locală
 
@@ -76,6 +76,12 @@ ICMPv4-In)” pe profilul Private.
 cd /share/Container/lanmon
 docker compose pull && docker compose up -d
 ```
+
+## Prima pornire
+
+La prima deschidere, aplicația cere crearea contului de administrator. Dacă
+`LANMON_SECRET_KEY` lipsește, se generează o cheie în `/data/secret.key` (sesiunile rămân valide
+la restart). Cu HTTPS (`tailscale serve`), setează `LANMON_COOKIE_SECURE=true`.
 
 ## Acces de la distanță
 

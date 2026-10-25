@@ -1,0 +1,51 @@
+{% macro icon(name, cls="") -%}
+<svg class="icon {{ cls }}" aria-hidden="true"><use href="/static/icons.svg#{{ name or 'circle-help' }}"></use></svg>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token(request) }}">
+{%- endmacro %}
+
+{% macro status_dot(status) -%}
+<span class="dot dot-{{ status }}" title="{{ {'online': 'Pornit', 'offline': 'Oprit'}.get(status, 'Necunoscut') }}"></span>
+{%- endmacro %}
+
+{% macro ago(dt) -%}
+{%- if dt -%}<time datetime="{{ dt.isoformat() }}" data-local>{{ dt.strftime("%d.%m.%Y %H:%M") }} UTC</time>{%- else -%}—{%- endif -%}
+{%- endmacro %}
+
+{% macro icon_picker(icons, selected) -%}
+<div class="icon-picker">
+  {% for name in icons %}
+  <label title="{{ name }}">
+    <input type="radio" name="icon" value="{{ name }}" {{ "checked" if name == selected }}>
+    {{ icon(name) }}
+  </label>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro device_fields(form, rooms, types) -%}
+<label>Nume
+  <input name="name" value="{{ form.name }}" required maxlength="100" autocomplete="off">
+</label>
+<label>Cameră
+  <select name="room_id">
+    <option value="">Fără cameră</option>
+    {% for room in rooms %}<option value="{{ room.id }}" {{ "selected" if room.id == form.room_id }}>{{ room.name }}</option>{% endfor %}
+  </select>
+</label>
+<label>Tip
+  <select name="type_id">
+    <option value="">—</option>
+    {% for t in types %}<option value="{{ t.id }}" {{ "selected" if t.id == form.type_id }}>{{ t.name }}</option>{% endfor %}
+  </select>
+</label>
+<label class="check">
+  <input type="checkbox" name="wol_enabled" {{ "checked" if form.wol_enabled }}>
+  <span>Suportă Wake-on-LAN<br><small class="muted">Recomandat doar pentru dispozitive pe cablu.</small></span>
+</label>
+<label>Note
+  <textarea name="notes" rows="2">{{ form.notes }}</textarea>
+</label>
+{%- endmacro %}

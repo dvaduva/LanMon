@@ -1,0 +1,34 @@
+{% from "_macros.html" import icon, csrf with context %}
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f6feb">
+  <title>{% block title %}LanMon{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/htmx.min.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf_token(request) }}"}'>
+  {% block header %}
+  <header class="topbar">
+    <a class="brand" href="/">LanMon</a>
+    <nav>
+      <a href="/" class="{{ 'active' if request.url.path == '/' }}">{{ icon("layout-dashboard") }}<span>Dashboard</span></a>
+      <a href="/unassigned" class="{{ 'active' if request.url.path.startswith('/unassigned') }}">{{ icon("inbox") }}<span>Neasignate</span></a>
+      <a href="/rooms" class="{{ 'active' if request.url.path.startswith('/rooms') }}">{{ icon("house") }}<span>Camere</span></a>
+      <a href="/types" class="{{ 'active' if request.url.path.startswith('/types') }}">{{ icon("tag") }}<span>Tipuri</span></a>
+      <a href="/account" class="{{ 'active' if request.url.path.startswith('/account') }}">{{ icon("settings") }}<span>Cont</span></a>
+    </nav>
+  </header>
+  {% endblock %}
+  <main>
+    {% for kind, message in pop_flashes(request) %}
+    <div class="flash flash-{{ kind }}" role="status">{{ message }}</div>
+    {% endfor %}
+    {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

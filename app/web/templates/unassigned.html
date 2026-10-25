@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon with context %}
+{% block title %}Neasignate · LanMon{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Neasignate</h1>
+    <p class="muted">Dispozitive găsite la scanare și nesalvate încă.</p>
+  </div>
+  <form method="post" action="/scan">{{ csrf() }}<button>{{ icon("radar") }} Scanează acum</button></form>
+</div>
+{% if not entries %}
+<div class="card empty"><p>Nimic nou. Toate dispozitivele găsite sunt salvate sau ignorate.</p></div>
+{% endif %}
+<ul class="list">
+  {% for e in entries %}
+  <li class="card row">
+    <div class="grow">
+      <strong>{{ e.hostname or e.vendor or "Dispozitiv necunoscut" }}</strong>
+      <div class="muted small">
+        {{ e.ip }} · <code>{{ e.mac }}</code>{% if e.vendor and e.hostname %} · {{ e.vendor }}{% endif %}
+        {% if is_random_mac(e.mac) %}<br><span class="warn">MAC randomizat (telefon/tabletă?): poate apărea din nou ca dispozitiv nou.</span>{% endif %}
+      </div>
+    </div>
+    <div class="actions">
+      <a class="button primary" href="/unassigned/{{ e.mac }}/add">{{ icon("plus") }} Adaugă</a>
+      <form method="post" action="/unassigned/{{ e.mac }}/ignore">{{ csrf() }}<button title="Ignoră">{{ icon("eye-off") }}<span class="sr">Ignoră</span></button></form>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% if ignored %}
+<details class="ignored">
+  <summary>Ignorate ({{ ignored|length }})</summary>
+  <ul class="list">
+    {% for e in ignored %}
+    <li class="row">
+      <div class="grow small">{{ e.hostname or e.vendor or "Necunoscut" }} · {{ e.ip }} · <code>{{ e.mac }}</code></div>
+      <form method="post" action="/unassigned/{{ e.mac }}/restore">{{ csrf() }}<button>{{ icon("eye") }} Reactivează</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+{% endblock %}

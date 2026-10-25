@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ago, csrf, device_fields, icon, status_dot with context %}
+{% block title %}{{ device.name }} · LanMon{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ status_dot(device.status) }} {{ device.name }}</h1>
+</div>
+<p class="muted">
+  {% if device.status == "online" %}Pornit de la {{ ago(device.status_changed_at) }}
+  {% elif device.status == "offline" %}Oprit de la {{ ago(device.status_changed_at) }}
+  {% else %}Stare necunoscută (se verifică la următorul ping){% endif %}
+</p>
+<dl class="card facts">
+  <dt>IP</dt><dd>{{ device.last_ip or "—" }}</dd>
+  <dt>MAC</dt><dd><code>{{ device.mac }}</code>{% if device.is_random_mac %} <span class="warn">randomizat</span>{% endif %}</dd>
+  <dt>Producător</dt><dd>{{ device.vendor or "—" }}</dd>
+  <dt>Hostname</dt><dd>{{ device.hostname or "—" }}</dd>
+  <dt>Văzut ultima dată</dt><dd>{{ ago(device.last_seen_at) }}</dd>
+  <dt>Adăugat</dt><dd>{{ ago(device.created_at) }}</dd>
+</dl>
+
+<form method="post" action="/devices/{{ device.id }}" class="card">
+  <h2>{{ icon("pencil") }} Editare</h2>
+  {{ csrf() }}
+  {{ device_fields(form, rooms, types) }}
+  <button class="primary">{{ icon("check") }} Salvează</button>
+</form>
+
+<section class="card">
+  <h2>Istoric</h2>
+  {% if events %}
+  <ul class="history">
+    {% for e in events %}<li>{{ status_dot(e.status) }} {{ "Pornit" if e.status == "online" else "Oprit" }} · {{ ago(e.at) }}{% if e.ip %} · {{ e.ip }}{% endif %}</li>{% endfor %}
+  </ul>
+  {% else %}<p class="muted">Nicio schimbare de stare încă.</p>{% endif %}
+</section>
+
+<form method="post" action="/devices/{{ device.id }}/delete" onsubmit="return confirm('Ștergi „{{ device.name }}”?')">
+  {{ csrf() }}
+  <button class="danger">{{ icon("trash-2") }} Șterge dispozitivul</button>
+</form>
+{% endblock %}

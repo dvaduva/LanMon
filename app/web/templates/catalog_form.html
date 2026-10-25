@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon, icon_picker with context %}
+{% block title %}{{ catalog.title }} · LanMon{% endblock %}
+{% block content %}
+<h1>{{ item.name if item else "Adaugă" }}</h1>
+<form method="post" action="{{ catalog.path }}/{{ item.id if item else 'new' }}" class="card">
+  {{ csrf() }}
+  <label>Nume <input name="name" value="{{ name }}" required maxlength="100"></label>
+  <label>Ordine <input type="number" name="sort_order" value="{{ sort_order }}" step="1"></label>
+  <fieldset><legend>Iconiță</legend>{{ icon_picker(catalog.icons, selected_icon) }}</fieldset>
+  <div class="actions">
+    <button class="primary">{{ icon("check") }} Salvează</button>
+    <a class="button" href="{{ catalog.path }}">Renunță</a>
+  </div>
+</form>
+{% if item %}
+<form method="post" action="{{ catalog.path }}/{{ item.id }}/delete">
+  {{ csrf() }}
+  <button class="danger" {{ "disabled" if used }}>{{ icon("trash-2") }} Șterge</button>
+  {% if used %}<p class="muted small">Folosit de {{ used }} dispozitive; mută-le întâi ca să poți șterge.</p>{% endif %}
+</form>
+{% endif %}
+{% endblock %}

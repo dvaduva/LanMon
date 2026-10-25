@@ -1,0 +1,28 @@
+{% from "_macros.html" import icon, status_dot with context %}
+{% if not groups %}
+<div class="card empty">
+  <p>Niciun dispozitiv salvat încă.</p>
+  <p class="muted">Dispozitivele găsite la scanare apar în <a href="/unassigned">Neasignate</a>, de unde le poți adăuga.</p>
+</div>
+{% endif %}
+{% for group in groups %}
+<section class="room">
+  <h2>
+    {{ icon(group.room.icon if group.room else "door-open") }}
+    {{ group.room.name if group.room else "Fără cameră" }}
+    <span class="count">{{ group.online }}/{{ group.devices|length }}</span>
+  </h2>
+  <ul class="devices">
+    {% for d in group.devices %}
+    <li>
+      <a href="/devices/{{ d.id }}">
+        {{ status_dot(d.status) }}
+        {{ icon(d.type.icon if d.type else "circle-help", "type") }}
+        <span class="name">{{ d.name }}</span>
+        <span class="ip muted">{{ d.last_ip or "" }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}

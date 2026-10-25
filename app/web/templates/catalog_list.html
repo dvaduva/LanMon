@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon with context %}
+{% block title %}{{ catalog.title }} · LanMon{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ catalog.title }}</h1>
+  <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} Adaugă</a>
+</div>
+{% if not items %}<div class="card empty"><p>Nimic încă.</p></div>{% endif %}
+<ul class="list">
+  {% for item in items %}
+  <li class="card">
+    <a class="row link" href="{{ catalog.path }}/{{ item.id }}">
+      {{ icon(item.icon) }}
+      <span class="grow">{{ item.name }}</span>
+      <span class="muted small">{{ usage.get(item.id, 0) }} dispozitive</span>
+      {{ icon("chevron-right") }}
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

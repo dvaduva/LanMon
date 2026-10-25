@@ -12,7 +12,8 @@ def main() -> None:
     )
     # Un singur worker: scanerul și ping-ul sunt task-uri de fundal în același proces.
     uvicorn.run(
-        "app.main:app",
+        "app.main:create_app",
+        factory=True,
         host=settings.host,
         port=settings.port,
         workers=1,

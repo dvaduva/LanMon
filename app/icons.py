@@ -1,0 +1,65 @@
+"""Iconițele Lucide disponibile în aplicație (sprite: app/static/icons.svg)."""
+
+ROOM_ICONS = [
+    "house",
+    "sofa",
+    "armchair",
+    "bed",
+    "baby",
+    "utensils",
+    "refrigerator",
+    "bath",
+    "washing-machine",
+    "briefcase",
+    "lamp-desk",
+    "gamepad-2",
+    "car",
+    "trees",
+    "door-open",
+    "server",
+]
+
+TYPE_ICONS = [
+    "monitor",
+    "laptop",
+    "tv",
+    "hard-drive",
+    "server",
+    "printer",
+    "smartphone",
+    "tablet",
+    "watch",
+    "cpu",
+    "router",
+    "wifi",
+    "speaker",
+    "camera",
+    "lightbulb",
+    "plug",
+    "thermometer",
+    "gamepad-2",
+    "circle-help",
+]
+
+UI_ICONS = [
+    "layout-dashboard",
+    "inbox",
+    "tag",
+    "key",
+    "log-out",
+    "settings",
+    "plus",
+    "pencil",
+    "trash-2",
+    "power",
+    "refresh-cw",
+    "radar",
+    "eye",
+    "eye-off",
+    "check",
+    "x",
+    "wifi-off",
+    "chevron-right",
+]
+
+ALL_ICONS = sorted(set(ROOM_ICONS + TYPE_ICONS + UI_ICONS))

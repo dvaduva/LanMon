@@ -1,3 +1,4 @@
+import secrets
 from functools import lru_cache
 from pathlib import Path
 
@@ -17,12 +18,24 @@ class Settings(BaseSettings):
     secret_key: str = ""
     log_level: str = "info"
     version: str = "dev"
+    # Cookie-ul de sesiune doar prin HTTPS (ex. în spatele `tailscale serve`).
+    cookie_secure: bool = False
     # Scanerul și ping-ul; dezactivate în teste.
     background_tasks: bool = True
 
     @property
     def db_path(self) -> Path:
         return self.data_dir / "lanmon.db"
+
+    def resolved_secret_key(self) -> str:
+        """LANMON_SECRET_KEY sau, dacă lipsește, o cheie generată o dată și păstrată în /data."""
+        if self.secret_key:
+            return self.secret_key
+        path = self.data_dir / "secret.key"
+        if not path.exists():
+            path.write_text(secrets.token_urlsafe(48))
+            path.chmod(0o600)
+        return path.read_text().strip()
 
     @property
     def database_url(self) -> str:

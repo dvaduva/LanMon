@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ago, csrf, icon with context %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted"><span id="summary">{{ online }} din {{ total }} pornite</span>
+      {% if last_scan %} · ultima scanare {{ ago(last_scan.at) }}{% endif %}</p>
+  </div>
+  <form method="post" action="/scan">
+    {{ csrf() }}
+    <button>{{ icon("radar") }} Scanează acum</button>
+  </form>
+</div>
+{% if unassigned %}
+<a class="banner" href="/unassigned">{{ icon("inbox") }} {{ unassigned }} dispozitive noi în „Neasignate” {{ icon("chevron-right") }}</a>
+{% endif %}
+<div id="groups" hx-get="/" hx-trigger="every 30s" hx-swap="innerHTML">
+  {% include "_dashboard_groups.html" %}
+</div>
+{% endblock %}
