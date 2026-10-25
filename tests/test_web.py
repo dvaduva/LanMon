@@ -71,6 +71,9 @@ PROTECTED = [
     ("GET", "/devices/1"),
     ("POST", "/devices/1"),
     ("POST", "/devices/1/delete"),
+    ("POST", "/devices/1/wake"),
+    ("POST", "/rooms/1/wake"),
+    ("GET", "/log"),
     *[
         (method, f"{prefix}{suffix}")
         for prefix in ("/rooms", "/types")
@@ -256,3 +259,93 @@ def test_types_are_seeded_and_editable(admin):
 def test_static_assets_served(client):
     assert client.get("/static/icons.svg").status_code == 200
     assert client.get("/static/htmx.min.js").status_code == 200
+
+
+class FakeWaker:
+    def __init__(self):
+        self.pending = {}
+        self.calls = []
+
+    async def wake(self, ids, source="user"):
+        self.calls.append((list(ids), source))
+        return list(ids)
+
+    def close_interrupted(self):
+        pass
+
+    async def shutdown(self):
+        pass
+
+
+def test_wake_buttons(admin):
+    from app.db.models import ActionLog
+
+    fake = FakeWaker()
+    admin.app.state.waker = fake
+    with session(admin) as s:
+        s.add(Room(name="Birou", icon="briefcase"))
+        s.flush()
+        room_id = s.scalar(select(Room.id))
+        s.add_all(
+            [
+                Device(
+                    mac="aa:bb:cc:00:00:01",
+                    name="PC1",
+                    room_id=room_id,
+                    wol_enabled=True,
+                    status="offline",
+                ),
+                Device(
+                    mac="aa:bb:cc:00:00:02",
+                    name="PC2",
+                    room_id=room_id,
+                    wol_enabled=True,
+                    status="offline",
+                ),
+                Device(
+                    mac="aa:bb:cc:00:00:03",
+                    name="PC3",
+                    room_id=room_id,
+                    wol_enabled=True,
+                    status="online",
+                ),
+                Device(
+                    mac="aa:bb:cc:00:00:04",
+                    name="TV",
+                    room_id=room_id,
+                    wol_enabled=False,
+                    status="offline",
+                ),
+            ]
+        )
+        s.commit()
+        ids = {d.name: d.id for d in s.scalars(select(Device))}
+
+    page = admin.get("/").text
+    assert "Pornește toată camera (2)" in page
+    assert len(re.findall(r'action="/devices/\d+/wake"', page)) == 2  # PC1 și PC2
+
+    post(admin, f"/rooms/{room_id}/wake", page="/")
+    assert fake.calls[-1] == ([ids["PC1"], ids["PC2"]], "room")  # doar WOL bifat și offline
+
+    response = post(
+        admin, f"/devices/{ids['PC1']}/wake", page="/", headers={"referer": "http://testserver/"}
+    )
+    assert response.headers["location"] == "/"
+    assert fake.calls[-1] == ([ids["PC1"]], "user")
+
+    post(admin, f"/devices/{ids['TV']}/wake", page="/")
+    assert len(fake.calls) == 2  # TV nu are WOL
+
+    fake.pending = {ids["PC1"]: 1}
+    assert "Se pornește…" in admin.get("/").text
+
+    with session(admin) as s:
+        s.add(ActionLog(device_id=ids["PC2"], action="wol", source="user", result="timeout"))
+        s.commit()
+    assert "Nu a răspuns" in admin.get("/").text
+    device_page = admin.get(f"/devices/{ids['PC2']}").text
+    assert "Fast Startup" in device_page and "BIOS" in device_page
+
+    log_page = admin.get("/log").text
+    assert "PC2" in log_page and "Nu a răspuns" in log_page

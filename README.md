@@ -4,7 +4,7 @@ Aplicație web pentru rețeaua de acasă: descoperă dispozitivele, arată dacă
 organizează pe camere și le pornește prin Wake-on-LAN. Rulează ca un singur container Docker pe
 QNAP, accesat din afară prin Tailscale. Specificația completă e în `docs/`.
 
-Stare: **Faza 2** (login, dashboard pe camere, Neasignate, administrare camere și tipuri).
+Stare: **Faza 3** (Wake-on-LAN, Jurnal). Progresul pe faze e bifat în `docs/`.
 
 ## Dezvoltare locală
 

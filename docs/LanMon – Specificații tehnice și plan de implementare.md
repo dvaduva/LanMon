@@ -166,77 +166,79 @@ Uvicorn rulează cu un singur worker, pentru că scanerul și ping-ul sunt task-
 
 ## Plan de implementare pe faze
 
+> **Stare (25 oct 2026):** Fazele 0–3 sunt implementate pe `main`. Faza 4 urmează. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
+
 Versiunea 1.0 se livrează în 5 faze, cu aproximativ 14–19 zile de lucru pentru un dezvoltator (estimare). Faza 0 verifică devreme cel mai mare risc: dacă ARP, ping-ul și broadcast-ul WOL funcționează din container pe QNAP. Fiecare fază se încheie cu o versiune instalată pe QNAP.
 
 ### Faza 0 — Fundament și validare tehnică (2–3 zile)
 
 Livrabile:
 
-- Repository, structură de proiect, ruff + pytest, configurare din `.env` (pydantic-settings).
-- Schelet FastAPI cu `/health`, SQLite în WAL, primele migrări Alembic.
-- Dockerfile, `docker-compose.yml`, workflow GitHub Actions care publică imaginea în GHCR.
-- Script de test în container: o scanare ARP, un ping și un pachet WOL către un PC real.
-- Tailscale instalat pe QNAP și pe telefon.
+- [x] Repository, structură de proiect, ruff + pytest, configurare din `.env` (pydantic-settings).
+- [x] Schelet FastAPI cu `/health`, SQLite în WAL, primele migrări Alembic.
+- [x] Dockerfile, `docker-compose.yml`, workflow GitHub Actions care publică imaginea în GHCR.
+- [x] Script de test în container: o scanare ARP, un ping și un pachet WOL către un PC real (`python -m app.tools.netcheck`).
+- [ ] Tailscale instalat pe QNAP și pe telefon.
 
 Criterii de acceptanță:
 
-- [ ] Containerul rulează pe QNAP din imaginea GHCR și `/health` răspunde.
-- [ ] Scriptul de test găsește dispozitivele prin ARP și primește răspuns la ping din container.
-- [ ] Un PC oprit pornește cu pachetul WOL trimis din container.
-- [ ] `/health` răspunde de pe telefon, prin Tailscale, cu Wi-Fi-ul oprit.
+- [ ] Containerul rulează pe QNAP din imaginea GHCR și `/health` răspunde. *(de verificat pe QNAP, la final)*
+- [ ] Scriptul de test găsește dispozitivele prin ARP și primește răspuns la ping din container. *(de verificat pe QNAP, la final)*
+- [ ] Un PC oprit pornește cu pachetul WOL trimis din container. *(de verificat pe QNAP, la final)*
+- [ ] `/health` răspunde de pe telefon, prin Tailscale, cu Wi-Fi-ul oprit. *(de verificat pe QNAP, la final)*
 
 ### Faza 1 — Descoperire și status (3–4 zile)
 
 Livrabile:
 
-- Serviciu de scanare ARP periodică și la cerere; populare `discovered`; vendor din OUI; detecție MAC randomizat.
-- Serviciu de ping la 30 s, cu anti-flapping și actualizare IP din tabela ARP.
-- Scriere `status_events` la schimbările de stare.
-- Teste unitare pentru normalizarea MAC, logica de stare și construcția pachetului WOL.
+- [x] Serviciu de scanare ARP periodică și la cerere; populare `discovered`; vendor din OUI; detecție MAC randomizat.
+- [x] Serviciu de ping la 30 s, cu anti-flapping și actualizare IP din tabela ARP.
+- [x] Scriere `status_events` la schimbările de stare.
+- [x] Teste unitare pentru normalizarea MAC, logica de stare și construcția pachetului WOL.
 
 Criterii de acceptanță:
 
-- [ ] După o scanare, toate dispozitivele pornite din rețea apar în `discovered`.
-- [ ] Un PC oprit devine „offline” în cel mult 90 de secunde, iar la pornire „online” în cel mult 30 de secunde după ce răspunde la ping.
-- [ ] Un IP schimbat de DHCP e preluat automat pentru același MAC.
+- [ ] După o scanare, toate dispozitivele pornite din rețea apar în `discovered`. *(de verificat pe QNAP, la final)*
+- [ ] Un PC oprit devine „offline” în cel mult 90 de secunde, iar la pornire „online” în cel mult 30 de secunde după ce răspunde la ping. *(de verificat pe QNAP, la final)*
+- [ ] Un IP schimbat de DHCP e preluat automat pentru același MAC. *(de verificat pe QNAP, la final)*
 
 ### Faza 2 — Autentificare și administrare (4–5 zile)
 
 Livrabile:
 
-- Ecran de configurare la prima pornire, login, logout, schimbare parolă, rate limiting, CSRF.
-- Layout mobile-first (Jinja2 + HTMX), Dashboard pe camere.
-- Pagini Neasignate (Adaugă / Ignoră), fișă dispozitiv cu editare, Camere, Tipuri.
-- Tipuri predefinite și iconițe.
+- [x] Ecran de configurare la prima pornire, login, logout, schimbare parolă, rate limiting, CSRF.
+- [x] Layout mobile-first (Jinja2 + HTMX), Dashboard pe camere.
+- [x] Pagini Neasignate (Adaugă / Ignoră), fișă dispozitiv cu editare, Camere, Tipuri.
+- [x] Tipuri predefinite și iconițe.
 
 Criterii de acceptanță:
 
-- [ ] Nicio pagină și nicio acțiune nu e accesibilă fără login.
-- [ ] Un dispozitiv din Neasignate poate fi salvat cu nume, cameră și tip în sub 30 de secunde de pe telefon.
-- [ ] Dashboard-ul arată starea corectă pentru toate dispozitivele salvate.
+- [x] Nicio pagină și nicio acțiune nu e accesibilă fără login. *(verificat prin teste)*
+- [ ] Un dispozitiv din Neasignate poate fi salvat cu nume, cameră și tip în sub 30 de secunde de pe telefon. *(de verificat pe QNAP, la final)*
+- [ ] Dashboard-ul arată starea corectă pentru toate dispozitivele salvate. *(de verificat pe QNAP, la final)*
 
 ### Faza 3 — Wake-on-LAN (2–3 zile)
 
 Livrabile:
 
-- Trimitere WOL per dispozitiv și „Pornește toată camera”.
-- Verificare prin ping la 5 s, cel mult 3 minute, cu stările „Se pornește…”, „Pornit”, „Nu a răspuns”.
-- Jurnal `actions_log` și pagina Jurnal; indicii de depanare la timeout.
+- [x] Trimitere WOL per dispozitiv și „Pornește toată camera”.
+- [x] Verificare prin ping la 5 s, cel mult 3 minute, cu stările „Se pornește…”, „Pornit”, „Nu a răspuns”.
+- [x] Jurnal `actions_log` și pagina Jurnal; indicii de depanare la timeout.
 
 Criterii de acceptanță:
 
-- [ ] Un PC oprit pornește de pe telefon, prin Tailscale, din afara casei, și apare „Pornit”.
-- [ ] „Pornește toată camera” trimite pachete doar dispozitivelor cu WOL bifat și offline.
-- [ ] Fiecare acțiune apare în Jurnal cu rezultatul final.
+- [ ] Un PC oprit pornește de pe telefon, prin Tailscale, din afara casei, și apare „Pornit”. *(de verificat pe QNAP, la final)*
+- [x] „Pornește toată camera” trimite pachete doar dispozitivelor cu WOL bifat și offline. *(verificat prin teste)*
+- [x] Fiecare acțiune apare în Jurnal cu rezultatul final. *(verificat prin teste)*
 
 ### Faza 4 — Live, istoric și release 1.0 (3–4 zile)
 
 Livrabile:
 
-- Actualizare live a stării prin SSE pe Dashboard și în fișa dispozitivului.
-- Istoric în fișă (ultimele 20 de evenimente), job de retenție 90 de zile.
-- Pagina Setări (subnet, intervale, timeout WOL), backup descărcabil, backup automat înainte de migrări.
-- Manifest PWA și iconiță de aplicație; README cu instalare și update.
+- [ ] Actualizare live a stării prin SSE pe Dashboard și în fișa dispozitivului.
+- [ ] Istoric în fișă (ultimele 20 de evenimente, făcut în Faza 2), job de retenție 90 de zile.
+- [ ] Pagina Setări (subnet, intervale, timeout WOL), backup descărcabil, backup automat înainte de migrări.
+- [ ] Manifest PWA și iconiță de aplicație; README cu instalare și update.
 
 Criterii de acceptanță:
 

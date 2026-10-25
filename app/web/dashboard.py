@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.db.models import Device, Room, User
 from app.web.deps import current_user, flash, get_db, redirect, templates
 from app.web.unassigned import unassigned_count
+from app.web.wol import wol_states
 
 router = APIRouter()
 
@@ -20,6 +21,10 @@ class RoomGroup:
     @property
     def online(self) -> int:
         return sum(d.status == "online" for d in self.devices)
+
+    @property
+    def wakeable(self) -> int:
+        return sum(d.wol_enabled and d.status == "offline" for d in self.devices)
 
 
 def group_by_room(db: Session) -> list[RoomGroup]:
@@ -48,6 +53,7 @@ def dashboard(
         "total": sum(len(g.devices) for g in groups),
         "unassigned": unassigned_count(db),
         "last_scan": request.app.state.scanner.last_result,
+        "wol": wol_states(request, db),
     }
     # Reîmprospătarea periodică (HTMX) cere doar lista; SSE vine în Faza 4.
     template = "_dashboard_groups.html" if request.headers.get("HX-Request") else "dashboard.html"

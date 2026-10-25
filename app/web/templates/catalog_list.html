@@ -4,7 +4,10 @@
 {% block content %}
 <div class="page-head">
   <h1>{{ catalog.title }}</h1>
-  <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} Adaugă</a>
+  <div class="actions">
+    {% for other in catalogs if other.path != catalog.path %}<a class="button" href="{{ other.path }}">{{ icon("tag" if other.path == "/types" else "house") }} {{ other.title }}</a>{% endfor %}
+    <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} Adaugă</a>
+  </div>
 </div>
 {% if not items %}<div class="card empty"><p>Nimic încă.</p></div>{% endif %}
 <ul class="list">

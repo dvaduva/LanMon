@@ -3,21 +3,35 @@ from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Device, StatusEvent, User
+from app.db.models import ActionLog, Device, StatusEvent, User
 from app.web.deps import current_user, flash, get_db, redirect, templates
 from app.web.forms import DeviceForm, choices
 
 router = APIRouter(prefix="/devices")
 
 
-def _context(db: Session, device: Device, form: DeviceForm, **extra) -> dict:
+def _context(request: Request, db: Session, device: Device, form: DeviceForm, **extra) -> dict:
     events = db.scalars(
         select(StatusEvent)
         .where(StatusEvent.device_id == device.id)
         .order_by(StatusEvent.at.desc(), StatusEvent.id.desc())
         .limit(20)
     ).all()
-    return {"device": device, "form": form, "events": events, **choices(db), **extra}
+    last_wol = db.scalar(
+        select(ActionLog)
+        .where(ActionLog.device_id == device.id, ActionLog.action == "wol")
+        .order_by(ActionLog.id.desc())
+        .limit(1)
+    )
+    return {
+        "device": device,
+        "form": form,
+        "events": events,
+        "last_wol": last_wol,
+        "waking": device.id in request.app.state.waker.pending,
+        **choices(db),
+        **extra,
+    }
 
 
 @router.get("/{device_id}")
@@ -37,7 +51,7 @@ def detail(
         wol_enabled=device.wol_enabled,
         notes=device.notes or "",
     )
-    return templates.TemplateResponse(request, "device.html", _context(db, device, form))
+    return templates.TemplateResponse(request, "device.html", _context(request, db, device, form))
 
 
 @router.post("/{device_id}")
@@ -53,7 +67,7 @@ async def update(
     form = DeviceForm.parse(await request.form())
     error = form.validate(db)
     if error:
-        context = _context(db, device, form, error=error)
+        context = _context(request, db, device, form, error=error)
         return templates.TemplateResponse(request, "device.html", context, status_code=400)
     form.apply(device)
     db.commit()

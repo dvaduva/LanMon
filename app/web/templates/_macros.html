@@ -49,3 +49,22 @@
   <textarea name="notes" rows="2">{{ form.notes }}</textarea>
 </label>
 {%- endmacro %}
+
+{% macro wol_badge(state) -%}
+{%- if state == "waking" -%}<span class="badge badge-waking">Se pornește…</span>
+{%- elif state == "woke" -%}<span class="badge badge-ok">Pornit</span>
+{%- elif state == "timeout" -%}<span class="badge badge-error">Nu a răspuns</span>
+{%- elif state == "error" -%}<span class="badge badge-error">Eroare WOL</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro wol_hints() -%}
+<ul class="hints">
+  <li>Wake-on-LAN activat în BIOS/UEFI (uneori „Power On by PCI-E” sau „Wake on LAN”).</li>
+  <li>Calculatorul e alimentat (priza, prelungitorul sau sursa nu sunt oprite).</li>
+  <li>„Wake on Magic Packet” activat în proprietățile plăcii de rețea, în Windows.</li>
+  <li>Fast Startup dezactivat în Windows (Opțiuni alimentare → Alegeți ce fac butoanele).</li>
+  <li>Calculatorul e conectat prin cablu; prin Wi-Fi, WOL funcționează rar.</li>
+  <li>Dacă a pornit dar apare oprit: firewall-ul Windows blochează ping-ul (regula „Echo Request – ICMPv4-In”).</li>
+</ul>
+{%- endmacro %}

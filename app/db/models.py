@@ -113,6 +113,8 @@ class ActionLog(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
+    device: Mapped[Device | None] = relationship()
+
 
 class Setting(Base):
     __tablename__ = "settings"

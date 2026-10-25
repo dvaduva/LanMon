@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ago, csrf, icon, wol_badge, wol_hints with context %}
+{% block title %}Jurnal · LanMon{% endblock %}
+{% block content %}
+<h1>Jurnal</h1>
+<p class="muted">Porniri prin Wake-on-LAN și scanări manuale, cele mai noi primele.</p>
+{% if not entries %}<div class="card empty"><p>Nicio acțiune încă.</p></div>{% endif %}
+<ul class="list">
+  {% for e in entries %}
+  <li class="card">
+    <div class="row">
+      {{ icon("power" if e.action == "wol" else "radar") }}
+      <div class="grow">
+        {% if e.action == "wol" %}
+        <strong>{% if e.device %}<a href="/devices/{{ e.device.id }}">{{ e.device.name }}</a>{% else %}Dispozitiv șters{% endif %}</strong>
+        <span class="muted small">· {{ "toată camera" if e.source == "room" else "manual" }}</span>
+        {% else %}
+        <strong>Scanare manuală</strong>
+        {% endif %}
+        <div class="muted small">{{ ago(e.created_at) }}{% if e.detail %} · {{ e.detail }}{% endif %}</div>
+      </div>
+      {% if e.action == "wol" %}
+        {{ wol_badge("waking" if e.result == "sent" else e.result) }}
+      {% else %}
+        <span class="badge {{ 'badge-ok' if e.result == 'ok' else 'badge-error' }}">{{ "OK" if e.result == "ok" else "Eroare" }}</span>
+      {% endif %}
+    </div>
+    {% if e.action == "wol" and e.result == "timeout" and loop.first %}
+    <details><summary class="small">Nu a pornit? Verifică:</summary>{{ wol_hints() }}</details>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,4 +1,6 @@
-{% from "_macros.html" import icon, status_dot with context %}
+{% from "_macros.html" import icon, status_dot, csrf, wol_badge with context %}
+{% set any_waking = "waking" in wol.values() %}
+<div id="groups" hx-get="/" hx-trigger="every {{ '5s' if any_waking else '30s' }}" hx-swap="outerHTML">
 {% if not groups %}
 <div class="card empty">
   <p>Niciun dispozitiv salvat încă.</p>
@@ -18,11 +20,24 @@
       <a href="/devices/{{ d.id }}">
         {{ status_dot(d.status) }}
         {{ icon(d.type.icon if d.type else "circle-help", "type") }}
-        <span class="name">{{ d.name }}</span>
+        <span class="label"><span class="name">{{ d.name }}</span>{{ wol_badge(wol.get(d.id)) }}</span>
         <span class="ip muted">{{ d.last_ip or "" }}</span>
       </a>
+      {% if d.wol_enabled and d.status != "online" and wol.get(d.id) != "waking" %}
+      <form method="post" action="/devices/{{ d.id }}/wake">
+        {{ csrf() }}
+        <button class="icon-button" title="Pornește {{ d.name }}">{{ icon("power") }}<span class="sr">Pornește</span></button>
+      </form>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>
+  {% if group.room and group.wakeable > 1 %}
+  <form method="post" action="/rooms/{{ group.room.id }}/wake" class="room-wake">
+    {{ csrf() }}
+    <button>{{ icon("power") }} Pornește toată camera ({{ group.wakeable }})</button>
+  </form>
+  {% endif %}
 </section>
 {% endfor %}
+</div>

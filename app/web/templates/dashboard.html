@@ -15,7 +15,5 @@
 {% if unassigned %}
 <a class="banner" href="/unassigned">{{ icon("inbox") }} {{ unassigned }} dispozitive noi în „Neasignate” {{ icon("chevron-right") }}</a>
 {% endif %}
-<div id="groups" hx-get="/" hx-trigger="every 30s" hx-swap="innerHTML">
-  {% include "_dashboard_groups.html" %}
-</div>
+{% include "_dashboard_groups.html" %}
 {% endblock %}

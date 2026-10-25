@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, device_fields, icon, status_dot with context %}
+{% from "_macros.html" import ago, csrf, device_fields, icon, status_dot, wol_badge, wol_hints with context %}
 {% block title %}{{ device.name }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -10,6 +10,28 @@
   {% elif device.status == "offline" %}Oprit de la {{ ago(device.status_changed_at) }}
   {% else %}Stare necunoscută (se verifică la următorul ping){% endif %}
 </p>
+{% if device.wol_enabled %}
+<section class="card wol"{% if waking %} hx-get="/devices/{{ device.id }}" hx-trigger="every 5s" hx-select=".wol" hx-swap="outerHTML"{% endif %}>
+  <div class="row">
+    <div class="grow">
+      <strong>Wake-on-LAN</strong>
+      {% if waking %}{{ wol_badge("waking") }}
+      {% elif last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
+    </div>
+    {% if device.status != "online" and not waking %}
+    <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} Pornește</button></form>
+    {% endif %}
+  </div>
+  {% if not waking and last_wol and last_wol.result in ("timeout", "error") %}
+  <details open>
+    <summary>Nu a pornit? Verifică:</summary>
+    {% if last_wol.detail %}<p class="muted small">{{ last_wol.detail }}</p>{% endif %}
+    {{ wol_hints() }}
+  </details>
+  {% endif %}
+</section>
+{% endif %}
+
 <dl class="card facts">
   <dt>IP</dt><dd>{{ device.last_ip or "—" }}</dd>
   <dt>MAC</dt><dd><code>{{ device.mac }}</code>{% if device.is_random_mac %} <span class="warn">randomizat</span>{% endif %}</dd>

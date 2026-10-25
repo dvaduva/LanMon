@@ -175,3 +175,4 @@ def make_router(c: Catalog) -> APIRouter:
 
 
 routers = [make_router(c) for c in CATALOGS]
+templates.env.globals["catalogs"] = CATALOGS

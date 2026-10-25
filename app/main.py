@@ -16,7 +16,8 @@ from app.security import LoginLimiter
 from app.services.netinfo import resolve_network
 from app.services.pinger import Pinger
 from app.services.scanner import Scanner
-from app.web import auth, catalog, dashboard, devices, unassigned
+from app.services.waker import Waker
+from app.web import auth, catalog, dashboard, devices, unassigned, wol
 from app.web.deps import CsrfError, Redirect, redirect, templates, verify_csrf
 from app.web.health import router as health_router
 
@@ -36,6 +37,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "LANMON_SECRET_KEY nu e setat; folosesc cheia generată în /data/secret.key."
             )
         await asyncio.to_thread(upgrade_to_head, settings.database_url)
+        await asyncio.to_thread(app.state.waker.close_interrupted)
         tasks: list[asyncio.Task] = []
         if settings.background_tasks:
             tasks = [
@@ -46,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        await app.state.waker.shutdown()
         app.state.engine.dispose()
 
     settings.data_dir.mkdir(parents=True, exist_ok=True)
@@ -71,11 +74,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = make_engine(settings.database_url)
     app.state.session_factory = make_session_factory(app.state.engine)
     app.state.events = EventBus()
-    app.state.scanner = Scanner(
-        app.state.session_factory,
-        app.state.events,
-        network=lambda: resolve_network(settings.interface, settings.subnet),
-    )
+
+    def network():
+        return resolve_network(settings.interface, settings.subnet)
+
+    app.state.scanner = Scanner(app.state.session_factory, app.state.events, network=network)
+    app.state.waker = Waker(app.state.session_factory, app.state.events, network=network)
     app.state.pinger = Pinger(
         app.state.session_factory,
         app.state.events,
@@ -83,7 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.login_limiter = LoginLimiter()
     app.include_router(health_router)
-    for router in (auth.router, dashboard.router, unassigned.router, devices.router):
+    for router in (auth.router, dashboard.router, unassigned.router, devices.router, wol.router):
         app.include_router(router)
     for router in catalog.routers:
         app.include_router(router)

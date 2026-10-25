@@ -17,8 +17,8 @@
     <nav>
       <a href="/" class="{{ 'active' if request.url.path == '/' }}">{{ icon("layout-dashboard") }}<span>Dashboard</span></a>
       <a href="/unassigned" class="{{ 'active' if request.url.path.startswith('/unassigned') }}">{{ icon("inbox") }}<span>Neasignate</span></a>
-      <a href="/rooms" class="{{ 'active' if request.url.path.startswith('/rooms') }}">{{ icon("house") }}<span>Camere</span></a>
-      <a href="/types" class="{{ 'active' if request.url.path.startswith('/types') }}">{{ icon("tag") }}<span>Tipuri</span></a>
+      <a href="/rooms" class="{{ 'active' if request.url.path.startswith(('/rooms', '/types')) }}">{{ icon("house") }}<span>Camere</span></a>
+      <a href="/log" class="{{ 'active' if request.url.path.startswith('/log') }}">{{ icon("list") }}<span>Jurnal</span></a>
       <a href="/account" class="{{ 'active' if request.url.path.startswith('/account') }}">{{ icon("settings") }}<span>Cont</span></a>
     </nav>
   </header>
