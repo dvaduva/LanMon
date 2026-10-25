@@ -4,7 +4,8 @@ Aplicație web pentru rețeaua de acasă: descoperă dispozitivele, arată dacă
 organizează pe camere și le pornește prin Wake-on-LAN. Rulează ca un singur container Docker pe
 QNAP, accesat din afară prin Tailscale. Specificația completă e în `docs/`.
 
-Stare: **Faza 3** (Wake-on-LAN, Jurnal). Progresul pe faze e bifat în `docs/`.
+Stare: **Faza 4** (actualizare live, Setări, backup, PWA), gata pentru release 1.0. Progresul pe
+faze e bifat în `docs/`.
 
 ## Dezvoltare locală
 
@@ -33,7 +34,7 @@ Push pe `main` rulează ruff și pytest. Un tag `v*` construiește imaginea `lin
 publică în `ghcr.io/dvaduva/lanmon:<versiune>` și `:latest`:
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v1.0.0 && git push origin v1.0.0
 ```
 
 ## Instalare pe QNAP (o singură dată)
@@ -82,6 +83,42 @@ docker compose pull && docker compose up -d
 La prima deschidere, aplicația cere crearea contului de administrator. Dacă
 `LANMON_SECRET_KEY` lipsește, se generează o cheie în `/data/secret.key` (sesiunile rămân valide
 la restart). Cu HTTPS (`tailscale serve`), setează `LANMON_COOKIE_SECURE=true`.
+
+## Setări
+
+Pagina **Setări** schimbă intervalul de ping (implicit 30 s), intervalul scanării ARP (300 s),
+timeout-ul verificării WOL (180 s) și subnetul scanat (gol = detectare automată; are prioritate
+față de `LANMON_SUBNET`). Intervalele noi se aplică de la următorul ciclu; un subnet nou se aplică
+după restartul containerului. Tot acolo: schimbarea parolei și backup-ul.
+
+Istoricul de stare și jurnalul de acțiuni păstrează 90 de zile; curățarea rulează noaptea la 03:30.
+
+## Backup și restaurare
+
+- **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,
+  camere, tipuri, istoric, jurnal, cont).
+- **Automat:** înainte de fiecare migrare a schemei, aplicația pune o copie în
+  `/data/backups/pre-migrare-*.db` (se păstrează ultimele 5).
+
+Restaurare (inclusiv pe o instalare nouă):
+
+```bash
+cd /share/Container/lanmon
+docker compose down
+cp lanmon-2026-10-25.db data/lanmon.db
+rm -f data/lanmon.db-wal data/lanmon.db-shm
+docker compose up -d
+```
+
+Contul de administrator vine din backup. Dacă `secret.key` (sau `LANMON_SECRET_KEY`) diferă, doar
+sesiunile deschise expiră și te autentifici din nou.
+
+## Aplicație pe telefon (PWA)
+
+Deschide LanMon în browser și alege „Add to Home Screen” (Safari: butonul Share; Chrome: meniul ⋮
+→ „Install app”). Se deschide pe tot ecranul, cu iconița proprie. Instalarea completă (cu service
+worker) cere HTTPS, adică `tailscale serve`; pe `http://` scurtătura funcționează, dar fără mod
+offline pentru fișierele statice.
 
 ## Acces de la distanță
 

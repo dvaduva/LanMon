@@ -61,6 +61,7 @@ UI_ICONS = [
     "wifi-off",
     "chevron-right",
     "list",
+    "download",
 ]
 
 ALL_ICONS = sorted(set(ROOM_ICONS + TYPE_ICONS + UI_ICONS))

@@ -165,3 +165,4 @@ details.ignored li { padding: .5rem 0; border-top: 1px solid var(--border); }
 .wol summary, .list summary { cursor: pointer; font-weight: 500; }
 .hints { margin: .5rem 0 0; padding-left: 1.2rem; font-size: .9rem; }
 .hints li + li { margin-top: .25rem; }
+.summary { margin: -.5rem 0 1rem; }

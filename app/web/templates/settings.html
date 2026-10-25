@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, icon with context %}
+{% block title %}Setări · LanMon{% endblock %}
+{% block content %}
+<h1>Setări</h1>
+
+<form method="post" action="/settings" class="card">
+  <h2>{{ icon("radar") }} Rețea și intervale</h2>
+  {{ csrf() }}
+  <p class="muted small">Rețea detectată: {{ network }}</p>
+  <label>Subnet de scanat
+    <input name="subnet" value="{{ subnet }}" placeholder="{{ env_subnet or 'automat, ex. 192.168.1.0/24' }}" autocomplete="off">
+    <small class="muted">Gol = {{ "LANMON_SUBNET (" ~ env_subnet ~ ")" if env_subnet else "detectare automată" }}.</small>
+  </label>
+  {% for s in int_settings %}
+  <label>{{ s.label }} ({{ s.unit }})
+    <input type="number" name="{{ s.key }}" value="{{ values[s.key] }}" min="{{ s.minimum }}" max="{{ s.maximum }}" step="1" required>
+  </label>
+  {% endfor %}
+  <button class="primary">{{ icon("check") }} Salvează</button>
+</form>
+
+<form method="post" action="/settings/password" class="card">
+  <h2>{{ icon("key") }} Schimbă parola</h2>
+  <p class="muted small">Autentificat ca <strong>{{ user.username }}</strong>.</p>
+  {{ csrf() }}
+  <label>Parola actuală <input type="password" name="current" required autocomplete="current-password"></label>
+  <label>Parola nouă <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+  <label>Confirmă parola nouă <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
+  <button class="primary">{{ icon("key") }} Schimbă parola</button>
+</form>
+
+<section class="card">
+  <h2>{{ icon("download") }} Backup</h2>
+  <p class="muted small">Copie completă a bazei de date: dispozitive, camere, tipuri, istoric și jurnal. Restaurarea e descrisă în README.</p>
+  <a class="button" href="/settings/backup">{{ icon("download") }} Descarcă backup</a>
+</section>
+
+<section class="card">
+  <h2>{{ icon("eye-off") }} Dispozitive ignorate</h2>
+  <p class="muted small">Le poți reactiva din <a href="/unassigned">Neasignate</a>, secțiunea „Ignorate”.</p>
+</section>
+
+<form method="post" action="/logout">
+  {{ csrf() }}
+  <button>{{ icon("log-out") }} Ieșire</button>
+</form>
+{% endblock %}

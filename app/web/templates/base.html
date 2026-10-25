@@ -5,12 +5,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1f6feb">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LanMon">
   <title>{% block title %}LanMon{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/htmx.min.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
-<body hx-headers='{"X-CSRF-Token": "{{ csrf_token(request) }}"}'>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf_token(request) }}"}' {% block body_attrs %}data-live{% endblock %}>
   {% block header %}
   <header class="topbar">
     <a class="brand" href="/">LanMon</a>
@@ -19,7 +24,7 @@
       <a href="/unassigned" class="{{ 'active' if request.url.path.startswith('/unassigned') }}">{{ icon("inbox") }}<span>Neasignate</span></a>
       <a href="/rooms" class="{{ 'active' if request.url.path.startswith(('/rooms', '/types')) }}">{{ icon("house") }}<span>Camere</span></a>
       <a href="/log" class="{{ 'active' if request.url.path.startswith('/log') }}">{{ icon("list") }}<span>Jurnal</span></a>
-      <a href="/account" class="{{ 'active' if request.url.path.startswith('/account') }}">{{ icon("settings") }}<span>Cont</span></a>
+      <a href="/settings" class="{{ 'active' if request.url.path.startswith('/settings') }}">{{ icon("settings") }}<span>Setări</span></a>
     </nav>
   </header>
   {% endblock %}

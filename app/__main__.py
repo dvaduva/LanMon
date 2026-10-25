@@ -19,6 +19,8 @@ def main() -> None:
         workers=1,
         log_level=settings.log_level,
         proxy_headers=True,
+        # Conexiunile SSE nu țin containerul în viață la `docker compose up -d`.
+        timeout_graceful_shutdown=5,
     )
 
 

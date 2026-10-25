@@ -8,3 +8,23 @@ function localizeTimes(root) {
 }
 document.addEventListener("DOMContentLoaded", () => localizeTimes());
 document.addEventListener("htmx:afterSwap", (e) => localizeTimes(e.target));
+
+// Actualizare live: evenimentele SSE declanșează reîmprospătarea fragmentelor HTMX
+// (elementele cu hx-trigger="lanmon:changed from:body").
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.body.hasAttribute("data-live")) return;
+  if (!window.EventSource) return;
+  let timer = null;
+  const changed = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => htmx.trigger(document.body, "lanmon:changed"), 300);
+  };
+  const source = new EventSource("/events");
+  for (const kind of ["device_status", "wol", "scan_completed", "device_discovered"]) {
+    source.addEventListener(kind, changed);
+  }
+});
+
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}

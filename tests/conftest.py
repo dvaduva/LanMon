@@ -25,3 +25,12 @@ def session_factory(settings):
     engine = make_engine(settings.database_url)
     yield make_session_factory(engine)
     engine.dispose()
+
+
+@pytest.fixture
+def admin(client):
+    """Client autentificat ca administrator (contul creat prin ecranul de configurare)."""
+    from tests.test_web import setup_admin
+
+    assert setup_admin(client).status_code == 303
+    return client

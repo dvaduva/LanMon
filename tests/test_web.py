@@ -1,6 +1,5 @@
 import re
 
-import pytest
 from sqlalchemy import select
 
 from app.db.models import Device, DeviceType, Discovered, Room, User
@@ -24,18 +23,12 @@ def setup_admin(client):
     return post(client, "/setup", {"username": "admin", "password": PASSWORD, "confirm": PASSWORD})
 
 
-@pytest.fixture
-def admin(client):
-    assert setup_admin(client).status_code == 303
-    return client
-
-
 def session(client):
     return client.app.state.session_factory()
 
 
 def test_first_run_redirects_to_setup(client):
-    for path in ("/", "/login", "/unassigned", "/rooms", "/types", "/account", "/devices/1"):
+    for path in ("/", "/login", "/unassigned", "/rooms", "/types", "/settings", "/devices/1"):
         response = client.get(path, follow_redirects=False)
         assert response.status_code == 303, path
         assert response.headers["location"] == "/setup", path
@@ -61,8 +54,10 @@ def test_setup_validates_password(client):
 PROTECTED = [
     ("GET", "/"),
     ("POST", "/scan"),
-    ("GET", "/account"),
-    ("POST", "/account/password"),
+    ("GET", "/settings"),
+    ("POST", "/settings"),
+    ("POST", "/settings/password"),
+    ("GET", "/settings/backup"),
     ("GET", "/unassigned"),
     ("GET", "/unassigned/aa:bb:cc:dd:ee:ff/add"),
     ("POST", "/unassigned/aa:bb:cc:dd:ee:ff/add"),
@@ -100,7 +95,7 @@ def test_every_page_and_action_requires_login(admin):
 
 
 def test_login_logout(admin):
-    assert post(admin, "/logout", page="/account").headers["location"] == "/login"
+    assert post(admin, "/logout", page="/settings").headers["location"] == "/login"
     assert admin.get("/", follow_redirects=False).headers["location"] == "/login"
 
     bad = post(admin, "/login", {"username": "admin", "password": "gresit"})
@@ -111,7 +106,7 @@ def test_login_logout(admin):
 
 
 def test_login_rate_limited_after_five_failures(admin):
-    post(admin, "/logout", page="/account")
+    post(admin, "/logout", page="/settings")
     for _ in range(5):
         assert post(admin, "/login", {"username": "admin", "password": "x"}).status_code == 401
     blocked = post(admin, "/login", {"username": "admin", "password": PASSWORD})
@@ -141,11 +136,11 @@ def test_password_change_invalidates_other_sessions(admin, settings):
 
     response = post(
         admin,
-        "/account/password",
+        "/settings/password",
         {"current": PASSWORD, "password": "parola-noua-1", "confirm": "parola-noua-1"},
-        page="/account",
+        page="/settings",
     )
-    assert response.headers["location"] == "/account"
+    assert response.headers["location"] == "/settings"
     assert admin.get("/", follow_redirects=False).status_code == 200
     assert other.get("/", follow_redirects=False).headers["location"] == "/login"
 

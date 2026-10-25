@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from app.db.models import User
 from app.security import MIN_PASSWORD_LENGTH, hash_password, verify_password
 from app.web.deps import (
-    current_user,
     flash,
     get_db,
     has_users,
@@ -102,32 +101,3 @@ def login(
 def logout(request: Request) -> Response:
     request.session.clear()
     return redirect(request, "/login")
-
-
-@router.get("/account")
-def account(request: Request, user: User = Depends(current_user)) -> Response:
-    return templates.TemplateResponse(request, "account.html", {"user": user})
-
-
-@router.post("/account/password")
-def change_password(
-    request: Request,
-    current: str = Form(""),
-    password: str = Form(""),
-    confirm: str = Form(""),
-    user: User = Depends(current_user),
-    db: Session = Depends(get_db),
-) -> Response:
-    error = (
-        "Parola actuală e greșită."
-        if not verify_password(user.password_hash, current)
-        else _password_problem(password, confirm)
-    )
-    if error:
-        context = {"user": user, "error": error}
-        return templates.TemplateResponse(request, "account.html", context, status_code=400)
-    user.password_hash = hash_password(password)
-    db.commit()
-    login_session(request, user)
-    flash(request, "Parola a fost schimbată. Celelalte sesiuni au fost deconectate.")
-    return redirect(request, "/account")

@@ -2,6 +2,7 @@
 {% from "_macros.html" import ago, csrf, device_fields, icon, status_dot, wol_badge, wol_hints with context %}
 {% block title %}{{ device.name }} · LanMon{% endblock %}
 {% block content %}
+<div id="live" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body{{ ', every 5s' if waking }}" hx-select="#live" hx-swap="outerHTML">
 <div class="page-head">
   <h1>{{ status_dot(device.status) }} {{ device.name }}</h1>
 </div>
@@ -11,7 +12,7 @@
   {% else %}Stare necunoscută (se verifică la următorul ping){% endif %}
 </p>
 {% if device.wol_enabled %}
-<section class="card wol"{% if waking %} hx-get="/devices/{{ device.id }}" hx-trigger="every 5s" hx-select=".wol" hx-swap="outerHTML"{% endif %}>
+<section class="card wol">
   <div class="row">
     <div class="grow">
       <strong>Wake-on-LAN</strong>
@@ -40,6 +41,7 @@
   <dt>Văzut ultima dată</dt><dd>{{ ago(device.last_seen_at) }}</dd>
   <dt>Adăugat</dt><dd>{{ ago(device.created_at) }}</dd>
 </dl>
+</div>
 
 <form method="post" action="/devices/{{ device.id }}" class="card">
   <h2>{{ icon("pencil") }} Editare</h2>
@@ -48,7 +50,7 @@
   <button class="primary">{{ icon("check") }} Salvează</button>
 </form>
 
-<section class="card">
+<section class="card" id="history" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body" hx-select="#history" hx-swap="outerHTML">
   <h2>Istoric</h2>
   {% if events %}
   <ul class="history">

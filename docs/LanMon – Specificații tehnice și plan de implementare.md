@@ -166,7 +166,7 @@ Uvicorn rulează cu un singur worker, pentru că scanerul și ping-ul sunt task-
 
 ## Plan de implementare pe faze
 
-> **Stare (25 oct 2026):** Fazele 0–3 sunt implementate pe `main`. Faza 4 urmează. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
+> **Stare (25 oct 2026):** Fazele 0–4 sunt implementate pe `main`; versiunea 1.0 e gata de release. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
 
 Versiunea 1.0 se livrează în 5 faze, cu aproximativ 14–19 zile de lucru pentru un dezvoltator (estimare). Faza 0 verifică devreme cel mai mare risc: dacă ARP, ping-ul și broadcast-ul WOL funcționează din container pe QNAP. Fiecare fază se încheie cu o versiune instalată pe QNAP.
 
@@ -235,17 +235,17 @@ Criterii de acceptanță:
 
 Livrabile:
 
-- [ ] Actualizare live a stării prin SSE pe Dashboard și în fișa dispozitivului.
-- [ ] Istoric în fișă (ultimele 20 de evenimente, făcut în Faza 2), job de retenție 90 de zile.
-- [ ] Pagina Setări (subnet, intervale, timeout WOL), backup descărcabil, backup automat înainte de migrări.
-- [ ] Manifest PWA și iconiță de aplicație; README cu instalare și update.
+- [x] Actualizare live a stării prin SSE pe Dashboard și în fișa dispozitivului.
+- [x] Istoric în fișă (ultimele 20 de evenimente, făcut în Faza 2), job de retenție 90 de zile.
+- [x] Pagina Setări (subnet, intervale, timeout WOL), backup descărcabil, backup automat înainte de migrări.
+- [x] Manifest PWA și iconiță de aplicație; README cu instalare și update.
 
 Criterii de acceptanță:
 
-- [ ] Starea se schimbă pe ecran fără refresh când un dispozitiv pornește sau se oprește.
-- [ ] Aplicația se adaugă pe ecranul principal și se deschide ca aplicație.
-- [ ] Restaurarea unui backup pe o instalare nouă readuce dispozitivele, camerele și istoricul.
-- [ ] Un update de versiune se face doar cu `docker compose pull && docker compose up -d`, fără pierdere de date.
+- [ ] Starea se schimbă pe ecran fără refresh când un dispozitiv pornește sau se oprește. *(verificat în browser; de confirmat pe QNAP, la final)*
+- [ ] Aplicația se adaugă pe ecranul principal și se deschide ca aplicație. *(de verificat pe telefon, la final)*
+- [x] Restaurarea unui backup pe o instalare nouă readuce dispozitivele, camerele și istoricul. *(verificat prin teste)*
+- [ ] Un update de versiune se face doar cu `docker compose pull && docker compose up -d`, fără pierdere de date. *(de verificat pe QNAP, la final)*
 
 ## Faze viitoare (backlog)
 
