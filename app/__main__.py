@@ -1,3 +1,5 @@
+import logging
+
 import uvicorn
 
 from app.config import get_settings
@@ -5,6 +7,9 @@ from app.config import get_settings
 
 def main() -> None:
     settings = get_settings()
+    logging.basicConfig(
+        level=settings.log_level.upper(), format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     # Un singur worker: scanerul și ping-ul sunt task-uri de fundal în același proces.
     uvicorn.run(
         "app.main:app",

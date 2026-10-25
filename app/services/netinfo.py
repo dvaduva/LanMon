@@ -54,3 +54,12 @@ def detect_network(interface: str | None = None) -> NetInfo:
         for net, mask, gw, iface, addr, metric in conf.route.routes
     ]
     return pick_network(routes, interface)
+
+
+def resolve_network(interface: str | None = None, subnet: str | None = None) -> NetInfo:
+    """Interfața din rute (sau cea dată); subnetul dat suprascrie masca detectată."""
+    info = detect_network(interface)
+    if subnet:
+        prefix = ipaddress.IPv4Network(subnet, strict=False).prefixlen
+        info = NetInfo(info.interface, ipaddress.IPv4Interface(f"{info.address.ip}/{prefix}"))
+    return info

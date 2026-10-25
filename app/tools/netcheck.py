@@ -6,7 +6,6 @@ Rulare pe QNAP:
 """
 
 import argparse
-import ipaddress
 import sys
 import time
 from collections.abc import Callable
@@ -14,20 +13,13 @@ from collections.abc import Callable
 from app.config import get_settings
 from app.mac import normalize_mac
 from app.services.arp import arp_scan
-from app.services.netinfo import NetInfo, detect_network
+from app.services.netinfo import NetInfo, resolve_network
 from app.services.wol import WOL_PORTS, send_magic_packet
 
 
-def resolve_network(args: argparse.Namespace) -> NetInfo:
+def network_from_args(args: argparse.Namespace) -> NetInfo:
     settings = get_settings()
-    interface = args.interface or settings.interface
-    info = detect_network(interface)
-    subnet = args.subnet or settings.subnet
-    if subnet:
-        address = ipaddress.IPv4Interface(
-            f"{info.address.ip}/{ipaddress.IPv4Network(subnet).prefixlen}"
-        )
-        info = NetInfo(interface=info.interface, address=address)
+    info = resolve_network(args.interface or settings.interface, args.subnet or settings.subnet)
     print(f"Interfață: {info.interface}  IP: {info.address}  broadcast: {info.broadcast}")
     return info
 
@@ -104,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
     p_all.add_argument("--wait", type=int, default=180)
 
     args = parser.parse_args(argv)
-    info = resolve_network(args)
+    info = network_from_args(args)
 
     checks: list[tuple[str, Callable[[], bool]]] = []
     if args.command in ("arp", "all"):

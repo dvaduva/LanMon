@@ -4,7 +4,7 @@ Aplicație web pentru rețeaua de acasă: descoperă dispozitivele, arată dacă
 organizează pe camere și le pornește prin Wake-on-LAN. Rulează ca un singur container Docker pe
 QNAP, accesat din afară prin Tailscale. Specificația completă e în `docs/`.
 
-Stare: **Faza 0** (fundament și validare tehnică).
+Stare: **Faza 1** (descoperire ARP și status prin ping, fără interfață web încă).
 
 ## Dezvoltare locală
 

@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     secret_key: str = ""
     log_level: str = "info"
     version: str = "dev"
+    # Scanerul și ping-ul; dezactivate în teste.
+    background_tasks: bool = True
 
     @property
     def db_path(self) -> Path:

@@ -1,11 +1,28 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+class UTCDateTime(TypeDecorator):
+    """SQLite pierde fusul orar: se scrie în UTC și se citește înapoi ca datetime UTC."""
+
+    impl = DateTime(timezone=True)
+    cache_ok = True
+
+    def process_bind_param(self, value: datetime | None, dialect):
+        if value is not None and value.tzinfo is not None:
+            value = value.astimezone(UTC)
+        return value
+
+    def process_result_value(self, value: datetime | None, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value
 
 
 class Base(DeclarativeBase):
@@ -48,11 +65,11 @@ class Device(Base):
     vendor: Mapped[str | None] = mapped_column(String(255))
     wol_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(10), default="unknown")  # online/offline/unknown
-    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    status_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    status_changed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     is_random_mac: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
     room: Mapped[Room | None] = relationship(back_populates="devices")
     type: Mapped[DeviceType | None] = relationship()
@@ -67,8 +84,8 @@ class Discovered(Base):
     ip: Mapped[str | None] = mapped_column(String(45))
     hostname: Mapped[str | None] = mapped_column(String(255))
     vendor: Mapped[str | None] = mapped_column(String(255))
-    first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    first_seen_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     ignored: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
@@ -79,7 +96,7 @@ class StatusEvent(Base):
     device_id: Mapped[int] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"), index=True)
     status: Mapped[str] = mapped_column(String(10))
     ip: Mapped[str | None] = mapped_column(String(45))
-    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
 
 
 class ActionLog(Base):
@@ -93,10 +110,8 @@ class ActionLog(Base):
     source: Mapped[str] = mapped_column(String(10))  # user/room
     result: Mapped[str] = mapped_column(String(10))  # sent/woke/timeout/error
     detail: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=utcnow, index=True
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class Setting(Base):
@@ -112,5 +127,5 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
