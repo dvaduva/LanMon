@@ -1,0 +1,16 @@
+services:
+  lanmon:
+    image: ghcr.io/dvaduva/lanmon:latest
+    container_name: lanmon
+    network_mode: host
+    cap_drop: [ALL]
+    cap_add: [NET_RAW]
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /share/Container/lanmon/data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health')"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
