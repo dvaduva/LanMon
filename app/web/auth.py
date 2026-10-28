@@ -1,3 +1,4 @@
+import math
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -79,7 +80,7 @@ def login(
     key = _client_key(request)
     locked = limiter.locked_for(key)
     if locked:
-        minutes = int(locked // 60) + 1
+        minutes = math.ceil(locked / 60)
         error = f"Prea multe încercări eșuate. Încearcă din nou peste {minutes} min."
         context = {"username": username, "error": error}
         return templates.TemplateResponse(request, "login.html", context, status_code=429)

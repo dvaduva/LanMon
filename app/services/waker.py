@@ -113,14 +113,18 @@ class Waker:
                     result = WOKE
                     break
         except asyncio.CancelledError:
+            self.pending.pop(target.id, None)
             raise
         except Exception:
             log.exception("Verificarea WOL a eșuat pentru %s", target.name)
             result = ERROR
+        try:
+            await asyncio.to_thread(self._finish, action_id, result)
+            self._publish(target, result)
         finally:
+            # Scos din `pending` abia după ce rezultatul e în jurnal, ca UI-ul să nu vadă
+            # o trezire terminată care încă apare „trimisă”.
             self.pending.pop(target.id, None)
-        await asyncio.to_thread(self._finish, action_id, result)
-        self._publish(target, result)
         log.info("WOL %s: %s", target.name, result)
 
     def _publish(self, target: WakeTarget, result: str) -> None:
