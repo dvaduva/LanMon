@@ -17,15 +17,20 @@ pip install -e ".[dev]"
 ruff check . && ruff format --check .
 pytest
 
-# Server local (datele în ./data)
-LANMON_DATA_DIR=./data python -m app     # Windows PowerShell: $env:LANMON_DATA_DIR="./data"
-# http://127.0.0.1:8765/health
+# Server local (datele în ./data; altă locație cu LANMON_DATA_DIR)
+python -m app
+# http://127.0.0.1:8765
 ```
+
+Pe Windows, scanarea ARP are nevoie de [Npcap](https://npcap.com) (cu „WinPcap API-compatible
+mode”), iar ARP-ul și ping-ul de un PowerShell pornit ca Administrator. Fără ele aplicația
+pornește, iar Dashboard-ul arată de ce nu merge scanarea. Actualizarea IP-ului din tabela ARP
+funcționează doar pe Linux (QNAP).
 
 Migrările Alembic rulează automat la pornire. O migrare nouă, după schimbarea modelelor:
 
 ```bash
-LANMON_DATA_DIR=./data alembic revision --autogenerate -m "descriere"
+alembic revision --autogenerate -m "descriere"
 ```
 
 ## Release
@@ -81,7 +86,7 @@ docker compose pull && docker compose up -d
 ## Prima pornire
 
 La prima deschidere, aplicația cere crearea contului de administrator. Dacă
-`LANMON_SECRET_KEY` lipsește, se generează o cheie în `/data/secret.key` (sesiunile rămân valide
+`LANMON_SECRET_KEY` lipsește, se generează o cheie în `secret.key`, în folderul de date (`/data` în container) (sesiunile rămân valide
 la restart). Cu HTTPS (`tailscale serve`), setează `LANMON_COOKIE_SECURE=true`.
 
 ## Setări

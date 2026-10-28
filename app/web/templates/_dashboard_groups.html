@@ -2,6 +2,9 @@
 {% set any_waking = "waking" in wol.values() %}
 <div id="groups" hx-get="/" hx-trigger="lanmon:changed from:body, every {{ '5s' if any_waking else '60s' }}" hx-swap="outerHTML">
 <p class="muted summary">{{ online }} din {{ total }} pornite{% if last_scan %} · ultima scanare {{ ago(last_scan.at) }}{% endif %}</p>
+{% if scan_error %}
+<p class="flash flash-error">{{ scan_error }}</p>
+{% endif %}
 {% if unassigned %}
 <a class="banner" href="/unassigned">{{ icon("inbox") }} {{ unassigned }} dispozitive noi în „Neasignate” {{ icon("chevron-right") }}</a>
 {% endif %}

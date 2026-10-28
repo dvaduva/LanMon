@@ -53,6 +53,7 @@ def dashboard(
         "total": sum(len(g.devices) for g in groups),
         "unassigned": unassigned_count(db),
         "last_scan": request.app.state.scanner.last_result,
+        "scan_error": request.app.state.scanner.last_error,
         "wol": wol_states(request, db),
     }
     # Reîmprospătarea periodică (HTMX) cere doar lista; SSE vine în Faza 4.

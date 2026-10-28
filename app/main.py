@@ -50,7 +50,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         if not settings.secret_key:
             log.warning(
-                "LANMON_SECRET_KEY nu e setat; folosesc cheia generată în /data/secret.key."
+                "LANMON_SECRET_KEY nu e setat; folosesc cheia generată în %s.",
+                (settings.data_dir / "secret.key").resolve(),
             )
         await asyncio.to_thread(
             backup_before_migration,

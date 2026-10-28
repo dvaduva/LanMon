@@ -94,3 +94,46 @@ def test_manual_scan_is_logged(session_factory):
         entry = s.scalar(select(ActionLog))
     assert (entry.action, entry.source, entry.result) == ("scan", "user", "ok")
     assert entry.detail == "1 dispozitive, 1 noi"
+
+
+def test_missing_npcap_is_reported_once_without_traceback(session_factory, caplog, monkeypatch):
+    import scapy.sendrecv
+
+    from app.services.arp import NO_PCAP, ArpUnavailable, arp_scan
+
+    def no_pcap(*args, **kwargs):
+        raise RuntimeError(
+            "Sniffing and sending packets is not available at layer 2: winpcap is not installed."
+        )
+
+    monkeypatch.setattr(scapy.sendrecv, "srp", no_pcap)
+    try:
+        arp_scan("192.168.1.0/24")
+    except ArpUnavailable as exc:
+        assert str(exc) == NO_PCAP
+    else:
+        raise AssertionError("ArpUnavailable așteptat")
+
+    def arp(network, iface, timeout):
+        raise ArpUnavailable(NO_PCAP)
+
+    scanner = Scanner(session_factory, EventBus(), network=lambda: NET, arp=arp)
+
+    async def three_cycles():
+        task = asyncio.create_task(scanner.run())
+        for _ in range(3):
+            await asyncio.sleep(0.05)
+            scanner.request_scan()
+        task.cancel()
+
+    asyncio.run(three_cycles())
+    warnings = [r for r in caplog.records if r.name == "app.services.scanner"]
+    assert [(r.levelname, r.getMessage(), r.exc_info) for r in warnings] == [
+        ("WARNING", NO_PCAP, None)
+    ]
+    assert scanner.last_error == NO_PCAP
+
+
+def test_dashboard_shows_scan_error(admin):
+    admin.app.state.scanner.last_error = "Scanarea ARP nu e disponibilă"
+    assert "Scanarea ARP nu e disponibilă" in admin.get("/").text

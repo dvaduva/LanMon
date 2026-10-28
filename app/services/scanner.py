@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.db.models import ActionLog, Device, Discovered
 from app.db.settings_store import get_int
 from app.events import Event, EventBus
-from app.services.arp import ArpReply, arp_scan
+from app.services.arp import ArpReply, ArpUnavailable, arp_scan
 from app.services.netinfo import NetInfo
 from app.services.oui import lookup_vendor
 
@@ -67,6 +67,8 @@ class Scanner:
         self._lock = asyncio.Lock()
         self.seen: dict[str, Seen] = {}
         self.last_result: ScanResult | None = None
+        # Motivul pentru care scanarea nu merge (afișat pe Dashboard); None când merge.
+        self.last_error: str | None = None
 
     def request_scan(self) -> None:
         """„Scanează acum”: următorul ciclu pornește imediat."""
@@ -77,8 +79,15 @@ class Scanner:
         while True:
             try:
                 await self.scan_once(manual=manual)
-            except Exception:
+            except ArpUnavailable as exc:
+                # Problemă de configurare, nu bug: un singur mesaj clar, fără traceback la
+                # fiecare ciclu.
+                if self.last_error != str(exc):
+                    log.warning("%s", exc)
+                self.last_error = str(exc)
+            except Exception as exc:
                 log.exception("Scanarea ARP a eșuat")
+                self.last_error = f"Scanarea ARP a eșuat: {exc}"
             interval = await asyncio.to_thread(self._interval)
             with contextlib.suppress(TimeoutError):
                 await asyncio.wait_for(self._trigger.wait(), timeout=interval)
@@ -112,6 +121,7 @@ class Scanner:
                 self.seen[reply.mac] = Seen(reply.ip, started)
             result = ScanResult(found=len(replies), new=len(new_macs), at=started)
             self.last_result = result
+            self.last_error = None
             if manual:
                 detail = f"{result.found} dispozitive, {result.new} noi"
                 await asyncio.to_thread(self._log_manual, started, "ok", detail)

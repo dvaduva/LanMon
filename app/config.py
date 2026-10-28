@@ -12,7 +12,8 @@ class Settings(BaseSettings):
 
     host: str = "0.0.0.0"
     port: int = 8765
-    data_dir: Path = Path("/data")
+    # Relativ la folderul curent când rulează local; imaginea Docker setează /data.
+    data_dir: Path = Path("data")
     subnet: str | None = None
     interface: str | None = None
     secret_key: str = ""
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
         return self.data_dir / "lanmon.db"
 
     def resolved_secret_key(self) -> str:
-        """LANMON_SECRET_KEY sau, dacă lipsește, o cheie generată o dată și păstrată în /data."""
+        """LANMON_SECRET_KEY sau, dacă lipsește, o cheie generată o dată și păstrată în data_dir."""
         if self.secret_key:
             return self.secret_key
         path = self.data_dir / "secret.key"
