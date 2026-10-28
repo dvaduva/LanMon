@@ -117,6 +117,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 .banner .icon:last-child { margin-left: auto; }
 
+.room > summary { list-style: none; cursor: pointer; user-select: none; }
+.room > summary::-webkit-details-marker { display: none; }
+.room .chevron { width: 1rem; height: 1rem; color: var(--muted); transition: transform .15s; }
+.room[open] .chevron { transform: rotate(90deg); }
+.room:not([open]) h2 { margin-bottom: 1rem; }
 .room h2 .count { margin-left: auto; font-weight: 400; font-size: .9rem; color: var(--muted); }
 .devices { list-style: none; margin: 0 0 1.25rem; padding: 0; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius); }

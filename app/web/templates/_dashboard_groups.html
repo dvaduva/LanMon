@@ -15,12 +15,15 @@
 </div>
 {% endif %}
 {% for group in groups %}
-<section class="room">
-  <h2>
-    {{ icon(group.room.icon if group.room else "door-open") }}
-    {{ group.room.name if group.room else "Fără cameră" }}
-    <span class="count">{{ group.online }}/{{ group.devices|length }}</span>
-  </h2>
+<details class="room" open data-room="{{ group.room.id if group.room else 'none' }}">
+  <summary>
+    <h2>
+      {{ icon("chevron-right", "chevron") }}
+      {{ icon(group.room.icon if group.room else "door-open") }}
+      {{ group.room.name if group.room else "Fără cameră" }}
+      <span class="count">{{ group.online }}/{{ group.devices|length }}</span>
+    </h2>
+  </summary>
   <ul class="devices">
     {% for d in group.devices %}
     <li>
@@ -45,6 +48,6 @@
     <button>{{ icon("power") }} Pornește toată camera ({{ group.wakeable }})</button>
   </form>
   {% endif %}
-</section>
+</details>
 {% endfor %}
 </div>

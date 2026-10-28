@@ -137,3 +137,14 @@ def test_missing_npcap_is_reported_once_without_traceback(session_factory, caplo
 def test_dashboard_shows_scan_error(admin):
     admin.app.state.scanner.last_error = "Scanarea ARP nu e disponibilă"
     assert "Scanarea ARP nu e disponibilă" in admin.get("/").text
+
+
+def test_dashboard_rooms_are_collapsible(admin):
+    from app.db.models import Room
+
+    with admin.app.state.session_factory.begin() as s:
+        room = Room(name="Birou", icon="briefcase")
+        s.add(Device(mac="aa:bb:cc:dd:ee:01", name="PC", room=room))
+    page = admin.get("/").text
+    assert '<details class="room" open data-room="' in page
+    assert "<summary>" in page

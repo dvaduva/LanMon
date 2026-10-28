@@ -9,6 +9,35 @@ function localizeTimes(root) {
 document.addEventListener("DOMContentLoaded", () => localizeTimes());
 document.addEventListener("htmx:afterSwap", (e) => localizeTimes(e.target));
 
+// Camere colapsate pe Dashboard: starea se ține în browser și se reaplică după fiecare
+// reîmprospătare HTMX (fragmentul vine mereu cu toate camerele deschise).
+const COLLAPSED_KEY = "lanmon:collapsed-rooms";
+function collapsedRooms() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(COLLAPSED_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+function applyCollapsed(root) {
+  const collapsed = collapsedRooms();
+  for (const el of (root || document).querySelectorAll("details.room[data-room]")) {
+    el.open = !collapsed.has(el.dataset.room);
+  }
+}
+document.addEventListener("DOMContentLoaded", () => applyCollapsed());
+document.addEventListener("htmx:afterSwap", () => applyCollapsed());
+document.addEventListener("toggle", (e) => {
+  const el = e.target;
+  if (!el.matches || !el.matches("details.room[data-room]")) return;
+  const collapsed = collapsedRooms();
+  if (el.open) collapsed.delete(el.dataset.room);
+  else collapsed.add(el.dataset.room);
+  try {
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]));
+  } catch {}
+}, true);
+
 // Actualizare live: evenimentele SSE declanșează reîmprospătarea fragmentelor HTMX
 // (elementele cu hx-trigger="lanmon:changed from:body").
 document.addEventListener("DOMContentLoaded", () => {
