@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, icon with context %}
+{% from "_macros.html" import ago, csrf, icon with context %}
 {% block title %}Setări · LanMon{% endblock %}
 {% block content %}
 <h1>Setări</h1>
@@ -102,6 +102,32 @@
   <h2>{{ icon("power-off") }} Oprire de la distanță</h2>
   <p class="muted small">LanMon oprește dispozitivele prin SSH, cu cheia de mai jos. Adaug-o pe fiecare PC, apoi bifează „Permite oprirea de la distanță” în fișa lui. Pașii pentru Windows, Linux și macOS sunt în README.</p>
   <textarea class="mono" rows="3" readonly onclick="this.select()">{{ ssh_public_key }}</textarea>
+</section>
+
+<section class="card" id="api">
+  <h2>{{ icon("plug") }} Home Assistant (API)</h2>
+  <p class="muted small">Tokenuri pentru API-ul REST <code>/api/v1</code>: starea dispozitivelor, pornire și oprire. Configurarea Home Assistant e descrisă în README.</p>
+  {% if new_token %}
+  <div class="notice">
+    <p class="small"><strong>Token nou pentru „{{ new_token_name }}”.</strong> Copiază-l acum; nu mai poate fi afișat.</p>
+    <textarea class="mono" rows="2" readonly onclick="this.select()">{{ new_token }}</textarea>
+  </div>
+  {% endif %}
+  {% if api_tokens %}
+  <ul class="history">
+    {% for t in api_tokens %}
+    <li class="row">
+      <span class="grow">{{ t.name }} <code class="small">{{ t.prefix }}…</code><br><small class="muted">folosit {{ ago(t.last_used_at) if t.last_used_at else "niciodată" }}</small></span>
+      <form method="post" action="/settings/tokens/{{ t.id }}/delete" onsubmit="return confirm('Revoci tokenul „{{ t.name }}”?')">{{ csrf() }}<button class="danger icon-button" title="Revocă">{{ icon("trash-2") }}<span class="sr">Revocă</span></button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="/settings/tokens" class="row">
+    {{ csrf() }}
+    <input name="name" placeholder="Nume, ex. Home Assistant" maxlength="100" class="grow">
+    <button>{{ icon("plus") }} Token nou</button>
+  </form>
 </section>
 
 <section class="card">

@@ -166,7 +166,7 @@ Uvicorn rulează cu un singur worker, pentru că scanerul și ping-ul sunt task-
 
 ## Plan de implementare pe faze
 
-> **Stare (29 oct 2026):** Fazele 0–5 sunt implementate pe `main`; versiunea 1.0 e gata de release. Faza 6 (backlog-ul de după 1.0) e în lucru. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
+> **Stare (29 oct 2026):** Fazele 0–5 sunt implementate pe `main`; versiunea 1.0 e gata de release. Faza 6 (backlog-ul de după 1.0) e implementată și acoperită de teste. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
 
 Versiunea 1.0 se livrează în 5 faze, cu aproximativ 14–19 zile de lucru pentru un dezvoltator (estimare). Faza 0 verifică devreme cel mai mare risc: dacă ARP, ping-ul și broadcast-ul WOL funcționează din container pe QNAP. Fiecare fază se încheie cu o versiune instalată pe QNAP.
 
@@ -267,7 +267,7 @@ Livrabile, în ordinea de lucru:
 - [x] **Mai mulți utilizatori, cu roluri:** rolurile „administrator” și „membru”; un membru vede și pornește doar dispozitivele din camerele permise. Administratorul gestionează utilizatorii din Setări.
 - [x] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.
 - [x] **Oprire de la distanță:** prin SSH, cu o cheie generată de aplicație (cheia publică se copiază pe PC); comandă după sistemul de operare (Windows, Linux, macOS); confirmare înainte de oprire; apare în Jurnal.
-- [ ] **Integrare Home Assistant:** API REST cu token (`/api/v1`): lista dispozitivelor cu starea, pornire și oprire; exemple de configurare HA în README.
+- [x] **Integrare Home Assistant:** API REST cu token (`/api/v1`): lista dispozitivelor cu starea, pornire și oprire; exemple de configurare HA în README.
 
 Criterii de acceptanță:
 
@@ -281,7 +281,7 @@ Criterii de acceptanță:
 
 ## Faze viitoare (backlog)
 
-Backlog-ul inițial, păstrat pentru context. Toate elementele de mai jos sunt planificate în Faza 6.
+Backlog-ul inițial, păstrat pentru context. Toate elementele de mai jos au fost implementate în Faza 6.
 
 | Funcționalitate | Ce adaugă | Impact asupra arhitecturii |
 | --- | --- | --- |

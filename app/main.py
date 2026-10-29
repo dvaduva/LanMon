@@ -25,6 +25,7 @@ from app.services.scheduler import Scheduler
 from app.services.shutdown import Shutdowner
 from app.services.waker import Waker
 from app.web import (
+    api,
     auth,
     catalog,
     dashboard,
@@ -141,6 +142,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         schedules,
         users,
         uptime,
+        api,
     ):
         app.include_router(module.router)
     for router in catalog.routers:

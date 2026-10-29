@@ -206,3 +206,10 @@ def test_shutdown_button_and_permissions(admin):
     assert fake.calls[-1] == (device_id, "user") and len(fake.calls) == 2
     response = post(admin, f"/devices/{other_id}/shutdown", page="/settings")
     assert response.status_code == 403 and len(fake.calls) == 2
+
+
+def test_unreachable_host(session_factory, tmp_path):
+    device_id = add_device(session_factory)
+    shutdowner = Shutdowner(session_factory, tmp_path / "ssh_key", port=1)
+    ok, message = asyncio.run(shutdowner.shutdown(device_id))
+    assert not ok and "conexiunea SSH a eșuat" in message and "()" not in message

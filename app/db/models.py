@@ -170,6 +170,19 @@ class Setting(Base):
     value: Mapped[str | None] = mapped_column(Text)
 
 
+class ApiToken(Base):
+    """Token pentru API-ul REST (Home Assistant); se păstrează doar hash-ul."""
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    prefix: Mapped[str] = mapped_column(String(12))  # începutul tokenului, ca să-l recunoști
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+
 user_rooms = Table(
     "user_rooms",
     Base.metadata,

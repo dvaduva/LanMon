@@ -126,6 +126,8 @@ def test_member_cannot_use_admin_pages(admin):
         ("POST", "/devices/1"),
         ("POST", "/devices/1/delete"),
         ("POST", "/users/new"),
+        ("POST", "/settings/tokens"),
+        ("POST", "/settings/tokens/1/delete"),
     ]:
         data = {"csrf_token": token} if method == "POST" else None
         response = admin.request(method, url, data=data, follow_redirects=False)

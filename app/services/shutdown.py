@@ -157,8 +157,10 @@ class Shutdowner:
         except asyncssh.PermissionDenied:
             reason = "cheia aplicației nu e acceptată (vezi Setări → Oprire de la distanță)."
             return False, reason, None
-        except (OSError, TimeoutError, asyncssh.Error) as exc:
-            return False, f"conexiunea SSH a eșuat ({exc or type(exc).__name__}).", None
+        except TimeoutError:
+            return False, f"nu răspunde pe portul SSH ({self.port}).", None
+        except (OSError, asyncssh.Error) as exc:
+            return False, f"conexiunea SSH a eșuat ({str(exc) or type(exc).__name__}).", None
         if result.exit_status in (0, None):
             return True, None, client.seen
         message = str(result.stderr or result.stdout or "").strip().splitlines()

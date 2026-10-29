@@ -5,11 +5,12 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import FileResponse, Response
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
 
 from app.db.backup import backup_database
-from app.db.models import User
+from app.db.models import ApiToken, User
 from app.db.settings_store import get_int, get_str, set_value
 from app.security import MIN_PASSWORD_LENGTH, hash_password, verify_password
 from app.services.notifier import load_config
@@ -65,12 +66,17 @@ def _context(request: Request, db: Session, user: User, **extra) -> dict:
         "values": values,
         "subnet": get_str(db, "subnet") or "",
         "env_subnet": request.app.state.settings.subnet,
+        "api_tokens": db.scalars(select(ApiToken).order_by(ApiToken.created_at)).all()
+        if user.is_admin
+        else [],
         "ssh_public_key": request.app.state.shutdowner.public_key() if user.is_admin else None,
         **extra,
     }
 
 
-async def _render(request: Request, db: Session, user: User, status_code: int = 200, **extra):
+async def render_settings(
+    request: Request, db: Session, user: User, status_code: int = 200, **extra
+):
     try:
         info = await asyncio.to_thread(request.app.state.network)
         network = f"{info.interface} · {info.address} (broadcast {info.broadcast})"
@@ -89,7 +95,7 @@ def account_redirect(request: Request) -> Response:
 async def settings_page(
     request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
 ) -> Response:
-    return await _render(request, db, user)
+    return await render_settings(request, db, user)
 
 
 @router.post("/settings")
@@ -121,7 +127,7 @@ async def save_settings(
             subnet = str(network)
 
     if errors:
-        return await _render(request, db, user, 400, error=" ".join(errors))
+        return await render_settings(request, db, user, 400, error=" ".join(errors))
     for key, value in parsed.items():
         set_value(db, key, str(value))
     set_value(db, "subnet", subnet or None)
@@ -150,7 +156,7 @@ async def save_notifications(
     if values["notify_email_host"] and "@" not in values["notify_email_to"]:
         errors.append("Pentru email completează adresa destinatarului.")
     if errors:
-        return await _render(request, db, user, 400, error=" ".join(errors))
+        return await render_settings(request, db, user, 400, error=" ".join(errors))
 
     for key in NOTIFY_FIELDS:
         set_value(db, key, values[key] or None)
@@ -204,7 +210,7 @@ async def change_password(
     else:
         error = None
     if error:
-        return await _render(request, db, user, 400, error=error)
+        return await render_settings(request, db, user, 400, error=error)
     user.password_hash = hash_password(password)
     db.commit()
     login_session(request, user)

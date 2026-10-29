@@ -58,6 +58,8 @@ async def verify_csrf(request: Request) -> None:
     """Toate cererile care modifică ceva trebuie să poarte tokenul din sesiune."""
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return
+    if request.url.path.startswith("/api/"):
+        return  # API-ul nu folosește cookie-ul de sesiune, ci tokenul din antet
     given = request.headers.get("X-CSRF-Token")
     if not given:
         form = await request.form()

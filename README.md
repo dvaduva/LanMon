@@ -168,6 +168,56 @@ deschide fișa și le poate porni; nu are acces la Neasignate, Camere, Jurnal, P
 Setări (își poate schimba doar parola). Contul creat la prima pornire e administrator și
 trebuie să rămână mereu cel puțin un administrator.
 
+## Home Assistant (API REST)
+
+Creează un token în **Setări → Home Assistant (API)**; se afișează o singură dată. Toate
+cererile au antetul `Authorization: Bearer <token>`:
+
+| Metodă | Cale | Ce face |
+| --- | --- | --- |
+| GET | `/api/v1/devices` | lista dispozitivelor, cu `online`, `status`, `ip`, `room`, `service_status` |
+| GET | `/api/v1/devices/{id}` | un dispozitiv (id-ul e în adresa fișei: `/devices/{id}`) |
+| POST | `/api/v1/devices/{id}/wake` | Wake-on-LAN (409 dacă nu e activat) |
+| POST | `/api/v1/devices/{id}/shutdown` | oprire prin SSH (409 dacă nu e activată) |
+
+Acțiunile apar în Jurnal cu sursa „Home Assistant”. Exemplu pentru `configuration.yaml`
+(tokenul în `secrets.yaml` ca `lanmon_auth: "Bearer lm_..."`):
+
+```yaml
+rest:
+  - resource: http://qnap.local:8765/api/v1/devices/1
+    headers:
+      Authorization: !secret lanmon_auth
+    scan_interval: 30
+    binary_sensor:
+      - name: PC birou
+        device_class: power
+        value_template: "{{ value_json.online }}"
+
+rest_command:
+  pc_birou_wake:
+    url: http://qnap.local:8765/api/v1/devices/1/wake
+    method: post
+    headers:
+      Authorization: !secret lanmon_auth
+  pc_birou_shutdown:
+    url: http://qnap.local:8765/api/v1/devices/1/shutdown
+    method: post
+    headers:
+      Authorization: !secret lanmon_auth
+
+template:
+  - switch:
+      - name: PC birou
+        state: "{{ is_state('binary_sensor.pc_birou', 'on') }}"
+        turn_on:
+          action: rest_command.pc_birou_wake
+        turn_off:
+          action: rest_command.pc_birou_shutdown
+```
+
+Înlocuiește `qnap.local:8765` cu adresa la care rulează LanMon (sau adresa Tailscale).
+
 ## Backup și restaurare
 
 - **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,
