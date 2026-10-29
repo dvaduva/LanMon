@@ -87,6 +87,11 @@ class Device(Base):
     check_ports: Mapped[str | None] = mapped_column(String(100))
     service_status: Mapped[str | None] = mapped_column(String(10))  # ok / down / None
     closed_ports: Mapped[str | None] = mapped_column(String(100))
+    # Oprire de la distanță prin SSH; ssh_host_key = amprenta memorată la prima conectare.
+    shutdown_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    ssh_user: Mapped[str | None] = mapped_column(String(100))
+    os: Mapped[str | None] = mapped_column(String(10))  # windows / linux / macos
+    ssh_host_key: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
     room: Mapped[Room | None] = relationship(back_populates="devices")
@@ -130,9 +135,9 @@ class ActionLog(Base):
     device_id: Mapped[int | None] = mapped_column(
         ForeignKey("devices.id", ondelete="SET NULL"), index=True
     )
-    action: Mapped[str] = mapped_column(String(10))  # wol/scan
-    source: Mapped[str] = mapped_column(String(10))  # user/room
-    result: Mapped[str] = mapped_column(String(10))  # sent/woke/timeout/error
+    action: Mapped[str] = mapped_column(String(10))  # wol/scan/shutdown
+    source: Mapped[str] = mapped_column(String(10))  # user/room/schedule/api
+    result: Mapped[str] = mapped_column(String(10))  # sent/woke/timeout/error/ok
     detail: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime())

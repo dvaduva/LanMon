@@ -99,6 +99,12 @@
 </section>
 
 <section class="card">
+  <h2>{{ icon("power-off") }} Oprire de la distanță</h2>
+  <p class="muted small">LanMon oprește dispozitivele prin SSH, cu cheia de mai jos. Adaug-o pe fiecare PC, apoi bifează „Permite oprirea de la distanță” în fișa lui. Pașii pentru Windows, Linux și macOS sunt în README.</p>
+  <textarea class="mono" rows="3" readonly onclick="this.select()">{{ ssh_public_key }}</textarea>
+</section>
+
+<section class="card">
   <h2>{{ icon("download") }} Backup</h2>
   <p class="muted small">Copie completă a bazei de date: dispozitive, camere, tipuri, istoric și jurnal. Restaurarea e descrisă în README.</p>
   <a class="button" href="/settings/backup">{{ icon("download") }} Descarcă backup</a>

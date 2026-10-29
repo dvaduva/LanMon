@@ -53,6 +53,27 @@
   <input type="checkbox" name="notify" {{ "checked" if form.notify }}>
   <span>Notifică-mă când e oprit<br><small class="muted">Pragul și canalele se setează în Setări → Notificări.</small></span>
 </label>
+<label class="check">
+  <input type="checkbox" name="shutdown_enabled" {{ "checked" if form.shutdown_enabled }}>
+  <span>Permite oprirea de la distanță (SSH)<br><small class="muted">Cheia publică a aplicației e în Setări → Oprire de la distanță.</small></span>
+</label>
+<div class="field-row">
+  <label>Utilizator SSH
+    <input name="ssh_user" value="{{ form.ssh_user }}" maxlength="100" autocomplete="off" placeholder="ex. dan">
+  </label>
+  <label>Sistem de operare
+    <select name="os">
+      <option value="">—</option>
+      {% for key, label in os_names.items() %}<option value="{{ key }}" {{ "selected" if key == form.os }}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+</div>
+{% if device is defined and device.ssh_host_key %}
+<label class="check">
+  <input type="checkbox" name="forget_host_key">
+  <span>Uită amprenta SSH memorată<br><small class="muted">Doar dacă sistemul a fost reinstalat; se memorează din nou la următoarea oprire.</small></span>
+</label>
+{% endif %}
 <label>Note
   <textarea name="notes" rows="2">{{ form.notes }}</textarea>
 </label>
@@ -83,6 +104,10 @@
 
 {% macro service_badge(device) -%}
 {%- if device.status == "online" and device.service_status == "down" -%}<span class="badge badge-error" title="Porturi închise: {{ device.closed_ports }}">Serviciu căzut</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro shutdown_badge(result) -%}
+{%- if result == "ok" %}<span class="badge badge-ok">Comandă trimisă</span>{% else %}<span class="badge badge-error">Eșuat</span>{% endif -%}
 {%- endmacro %}
 
 {% macro wol_badge(state) -%}

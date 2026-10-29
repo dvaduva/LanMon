@@ -137,6 +137,29 @@ fiecare dispozitiv a fost pornit în ultimele 7 și 30 de zile, plus o bară pe 
 dispozitivului arată aceleași procente și ultimele 7 zile. Calculul folosește istoricul de
 stare, în fusul orar `LANMON_TZ`; timpul dinainte de prima înregistrare nu se ia în calcul.
 
+## Oprire de la distanță
+
+LanMon poate opri un PC prin SSH, cu o cheie ed25519 generată la prima pornire (fișierul
+`ssh_key` din directorul de date; păstreaz-o la backup, altfel trebuie adăugată din nou pe PC-uri).
+
+1. Copiază cheia publică din **Setări → Oprire de la distanță**.
+2. Adaug-o pe PC:
+   - **Windows 10/11:** Setări → Sistem → Caracteristici opționale → *OpenSSH Server*, apoi
+     în PowerShell ca administrator: `Start-Service sshd; Set-Service sshd -StartupType Automatic`.
+     Pentru un cont de administrator, cheia merge în `C:\ProgramData\ssh\administrators_authorized_keys`
+     (apoi `icacls C:\ProgramData\ssh\administrators_authorized_keys /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F"`);
+     pentru un cont obișnuit, în `C:\Users\<nume>\.ssh\authorized_keys`. Comanda rulată: `shutdown /s /t 0`.
+   - **Linux / macOS:** cheia în `~/.ssh/authorized_keys` (pe macOS activează *Remote Login*).
+     Comanda rulată e `sudo -n shutdown -h now`, deci utilizatorul are nevoie de o regulă sudo fără
+     parolă, ex. în `/etc/sudoers.d/lanmon`: `dan ALL=(root) NOPASSWD: /sbin/shutdown, /usr/sbin/shutdown`.
+3. În fișa dispozitivului bifează „Permite oprirea de la distanță”, completează utilizatorul SSH
+   și sistemul de operare.
+
+Butonul „Oprește” apare în fișă cât timp dispozitivul e pornit și cere confirmare. La prima
+conectare LanMon memorează amprenta SSH a PC-ului; dacă se schimbă (ex. sistem reinstalat),
+oprirea e refuzată până bifezi „Uită amprenta SSH memorată” în fișă. Fiecare oprire apare în
+Jurnal. Membrii pot opri dispozitivele din camerele lor.
+
 ## Utilizatori
 
 Setări → Utilizatori (doar pentru administratori). Un **administrator** vede și modifică tot.

@@ -22,6 +22,7 @@ from app.services.pinger import Pinger
 from app.services.retention import run_nightly
 from app.services.scanner import Scanner
 from app.services.scheduler import Scheduler
+from app.services.shutdown import Shutdowner
 from app.services.waker import Waker
 from app.web import (
     auth,
@@ -121,6 +122,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.events,
         extra_arp=lambda: {mac: seen.ip for mac, seen in app.state.scanner.seen.items()},
     )
+    app.state.shutdowner = Shutdowner(app.state.session_factory, settings.data_dir / "ssh_key")
     app.state.scheduler = Scheduler(app.state.session_factory, app.state.waker, settings.tz)
     app.state.notify_send = deliver
     app.state.notifier = Notifier(

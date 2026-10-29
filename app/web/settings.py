@@ -65,6 +65,7 @@ def _context(request: Request, db: Session, user: User, **extra) -> dict:
         "values": values,
         "subnet": get_str(db, "subnet") or "",
         "env_subnet": request.app.state.settings.subnet,
+        "ssh_public_key": request.app.state.shutdowner.public_key() if user.is_admin else None,
         **extra,
     }
 

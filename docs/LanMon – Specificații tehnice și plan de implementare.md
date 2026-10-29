@@ -266,7 +266,7 @@ Livrabile, în ordinea de lucru:
 - [x] **Verificări pe porturi TCP:** porturi implicite pe tip (ex. PC 3389, NAS 443) și suprascriere pe dispozitiv; la dispozitivele care răspund la ping se verifică porturile, iar starea „rețea OK, serviciu căzut” apare pe Dashboard și în fișă.
 - [x] **Mai mulți utilizatori, cu roluri:** rolurile „administrator” și „membru”; un membru vede și pornește doar dispozitivele din camerele permise. Administratorul gestionează utilizatorii din Setări.
 - [x] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.
-- [ ] **Oprire de la distanță:** prin SSH, cu o cheie generată de aplicație (cheia publică se copiază pe PC); comandă după sistemul de operare (Windows, Linux, macOS); confirmare înainte de oprire; apare în Jurnal.
+- [x] **Oprire de la distanță:** prin SSH, cu o cheie generată de aplicație (cheia publică se copiază pe PC); comandă după sistemul de operare (Windows, Linux, macOS); confirmare înainte de oprire; apare în Jurnal.
 - [ ] **Integrare Home Assistant:** API REST cu token (`/api/v1`): lista dispozitivelor cu starea, pornire și oprire; exemple de configurare HA în README.
 
 Criterii de acceptanță:

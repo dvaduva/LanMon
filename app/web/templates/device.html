@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, device_fields, icon, pct, service_badge, status_dot, uptime_bars, wol_badge, wol_hints with context %}
+{% from "_macros.html" import ago, csrf, device_fields, icon, pct, service_badge, shutdown_badge, status_dot, uptime_bars, wol_badge, wol_hints with context %}
 {% block title %}{{ device.name }} · LanMon{% endblock %}
 {% block content %}
 <div id="live" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body{{ ', every 5s' if waking }}" hx-select="#live" hx-swap="outerHTML">
@@ -11,25 +11,32 @@
   {% elif device.status == "offline" %}Oprit de la {{ ago(device.status_changed_at) }}
   {% else %}Stare necunoscută (se verifică la următorul ping){% endif %}
 </p>
-{% if device.wol_enabled %}
+{% if device.wol_enabled or device.shutdown_enabled %}
 <section class="card wol">
   <div class="row">
     <div class="grow">
-      <strong>Wake-on-LAN</strong>
+      <strong>{{ "Wake-on-LAN" if not device.shutdown_enabled else ("Pornire și oprire" if device.wol_enabled else "Oprire de la distanță") }}</strong>
       {% if waking %}{{ wol_badge("waking") }}
-      {% elif last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
-      {% if viewer(request).is_admin %}<div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>{% endif %}
+      {% elif device.wol_enabled and last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
+      {% if device.shutdown_enabled and last_shutdown %}<div class="muted small">Ultima oprire: {{ ago(last_shutdown.created_at) }} · {{ shutdown_badge(last_shutdown.result) }}</div>{% endif %}
+      {% if device.wol_enabled and viewer(request).is_admin %}<div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>{% endif %}
     </div>
-    {% if device.status != "online" and not waking %}
+    {% if device.wol_enabled and device.status != "online" and not waking %}
     <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} Pornește</button></form>
     {% endif %}
+    {% if device.shutdown_enabled and device.status == "online" %}
+    <form method="post" action="/devices/{{ device.id }}/shutdown" onsubmit="return confirm('Oprești „{{ device.name }}”? Programele deschise se închid fără salvare.')">{{ csrf() }}<button class="danger">{{ icon("power-off") }} Oprește</button></form>
+    {% endif %}
   </div>
-  {% if not waking and last_wol and last_wol.result in ("timeout", "error") %}
+  {% if device.wol_enabled and not waking and last_wol and last_wol.result in ("timeout", "error") %}
   <details open>
     <summary>Nu a pornit? Verifică:</summary>
     {% if last_wol.detail %}<p class="muted small">{{ last_wol.detail }}</p>{% endif %}
     {{ wol_hints() }}
   </details>
+  {% endif %}
+  {% if device.shutdown_enabled and last_shutdown and last_shutdown.result == "error" and last_shutdown.detail %}
+  <p class="muted small">Oprirea a eșuat: {{ last_shutdown.detail }}</p>
   {% endif %}
 </section>
 {% endif %}

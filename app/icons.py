@@ -60,6 +60,7 @@ UI_ICONS = [
     "pencil",
     "trash-2",
     "power",
+    "power-off",
     "refresh-cw",
     "radar",
     "eye",

@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, icon, wol_badge, wol_hints with context %}
+{% from "_macros.html" import ago, csrf, icon, shutdown_badge, wol_badge, wol_hints with context %}
 {% block title %}Jurnal · LanMon{% endblock %}
 {% block content %}
 <h1>Jurnal</h1>
-<p class="muted">Porniri prin Wake-on-LAN și scanări manuale, cele mai noi primele.</p>
+<p class="muted">Porniri prin Wake-on-LAN, opriri de la distanță și scanări manuale, cele mai noi primele.</p>
 {% if not entries %}<div class="card empty"><p>Nicio acțiune încă.</p></div>{% endif %}
 <ul class="list">
   {% for e in entries %}
   <li class="card">
     <div class="row">
-      {{ icon("power" if e.action == "wol" else "radar") }}
+      {{ icon({"wol": "power", "shutdown": "power-off"}.get(e.action, "radar")) }}
       <div class="grow">
-        {% if e.action == "wol" %}
+        {% if e.action in ("wol", "shutdown") %}
         <strong>{% if e.device %}<a href="/devices/{{ e.device.id }}">{{ e.device.name }}</a>{% else %}Dispozitiv șters{% endif %}</strong>
-        <span class="muted small">· {{ {"room": "toată camera", "schedule": "programat"}.get(e.source, "manual") }}</span>
+        <span class="muted small">· {{ "oprire · " if e.action == "shutdown" }}{{ {"room": "toată camera", "schedule": "programat", "api": "Home Assistant"}.get(e.source, "manual") }}</span>
         {% else %}
         <strong>Scanare manuală</strong>
         {% endif %}
@@ -21,6 +21,8 @@
       </div>
       {% if e.action == "wol" %}
         {{ wol_badge("waking" if e.result == "sent" else e.result) }}
+      {% elif e.action == "shutdown" %}
+        {{ shutdown_badge(e.result) }}
       {% else %}
         <span class="badge {{ 'badge-ok' if e.result == 'ok' else 'badge-error' }}">{{ "OK" if e.result == "ok" else "Eroare" }}</span>
       {% endif %}

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import DeviceType, Room
 from app.services.portcheck import format_ports, parse_ports
+from app.services.shutdown import OS_NAMES
 
 
 @dataclass
@@ -15,6 +16,10 @@ class DeviceForm:
     wol_enabled: bool = False
     notify: bool = False
     check_ports: str = ""
+    shutdown_enabled: bool = False
+    ssh_user: str = ""
+    os: str = ""
+    forget_host_key: bool = False
     notes: str = ""
 
     @classmethod
@@ -26,6 +31,10 @@ class DeviceForm:
             wol_enabled=form.get("wol_enabled") == "on",
             notify=form.get("notify") == "on",
             check_ports=str(form.get("check_ports", "")).strip(),
+            shutdown_enabled=form.get("shutdown_enabled") == "on",
+            ssh_user=str(form.get("ssh_user", "")).strip(),
+            os=str(form.get("os", "")),
+            forget_host_key=form.get("forget_host_key") == "on",
             notes=str(form.get("notes", "")).strip(),
         )
 
@@ -43,6 +52,12 @@ class DeviceForm:
                 parse_ports(self.check_ports)
             except ValueError as exc:
                 return f"{exc}. Exemplu: 3389 sau 22, 443; „-” = fără verificare."
+        if self.os and self.os not in OS_NAMES:
+            return "Sistem de operare necunoscut."
+        if self.shutdown_enabled and not (self.ssh_user and self.os):
+            return "Pentru oprirea de la distanță alege utilizatorul SSH și sistemul de operare."
+        if len(self.ssh_user) > 100:
+            return "Utilizatorul SSH poate avea cel mult 100 de caractere."
         return None
 
     def apply(self, device) -> None:
@@ -55,6 +70,11 @@ class DeviceForm:
             device.check_ports = "-"
         else:
             device.check_ports = format_ports(parse_ports(self.check_ports))
+        device.shutdown_enabled = self.shutdown_enabled
+        device.ssh_user = self.ssh_user or None
+        device.os = self.os or None
+        if self.forget_host_key:
+            device.ssh_host_key = None
         device.notes = self.notes or None
 
 
@@ -67,6 +87,7 @@ def _int_or_none(value) -> int | None:
 
 def choices(db: Session) -> dict:
     return {
+        "os_names": OS_NAMES,
         "rooms": db.scalars(select(Room).order_by(Room.sort_order, Room.name)).all(),
         "types": db.scalars(
             select(DeviceType).order_by(DeviceType.sort_order, DeviceType.name)

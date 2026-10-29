@@ -27,8 +27,15 @@ def _context(request: Request, db: Session, device: Device, form: DeviceForm, **
         .order_by(ActionLog.id.desc())
         .limit(1)
     )
+    last_shutdown = db.scalar(
+        select(ActionLog)
+        .where(ActionLog.device_id == device.id, ActionLog.action == "shutdown")
+        .order_by(ActionLog.id.desc())
+        .limit(1)
+    )
     return {
         "device": device,
+        "last_shutdown": last_shutdown,
         "form": form,
         "events": events,
         "last_wol": last_wol,
@@ -60,6 +67,9 @@ def detail(
         wol_enabled=device.wol_enabled,
         notify=device.notify,
         check_ports=device.check_ports or "",
+        shutdown_enabled=device.shutdown_enabled,
+        ssh_user=device.ssh_user or "",
+        os=device.os or "",
         notes=device.notes or "",
     )
     return templates.TemplateResponse(request, "device.html", _context(request, db, device, form))
@@ -84,6 +94,24 @@ async def update(
     db.commit()
     flash(request, "Modificările au fost salvate.")
     return redirect(request, f"/devices/{device.id}")
+
+
+@router.post("/{device_id}/shutdown")
+async def shutdown(
+    device_id: int,
+    request: Request,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    device = db.get(Device, device_id)
+    if device is None:
+        return redirect(request, "/")
+    if not user.can_see(device):
+        raise Forbidden
+    db.close()
+    ok, message = await request.app.state.shutdowner.shutdown(device_id, source="user")
+    flash(request, message, "ok" if ok else "error")
+    return redirect(request, f"/devices/{device_id}")
 
 
 @router.post("/{device_id}/delete")
