@@ -193,3 +193,15 @@ def test_device_notify_checkbox(admin):
     with admin.app.state.session_factory() as s:
         assert s.get(Device, 1).notify is True
     assert 'name="notify" checked' in admin.get("/devices/1").text
+
+
+def test_telegram_token_without_chat_id_is_rejected(admin):
+    response = post(
+        admin,
+        "/settings/notifications",
+        {"notify_telegram_token": "123:abc", "notify_offline_min": "10"},
+        page="/settings",
+    )
+    assert response.status_code == 400
+    assert "also fill in the Chat ID" in response.text
+    assert "No channel configured yet." in response.text

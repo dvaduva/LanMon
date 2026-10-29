@@ -172,6 +172,15 @@ async def save_notifications(
     offline = values["notify_offline_min"] or "10"
     if not offline.isdigit() or not 1 <= int(offline) <= 1440:
         errors.append(t(request, "The “offline” threshold must be between 1 and 1440 minutes."))
+    if values["notify_telegram_token"] and not values["notify_telegram_chat"]:
+        errors.append(
+            t(
+                request,
+                "For Telegram, also fill in the Chat ID: send your bot a message, then open "
+                "https://api.telegram.org/bot<token>/getUpdates and copy the number from "
+                '"chat":{"id":…}.',
+            )
+        )
     if values["notify_email_host"] and "@" not in values["notify_email_to"]:
         errors.append(t(request, "For email, fill in the recipient's address."))
     if errors:

@@ -81,6 +81,7 @@
   "For email, fill in the recipient's address.": "Pentru email completează adresa destinatarului.",
   "For Gmail, use an “app password”.": "Pentru Gmail folosește o „parolă de aplicație”.",
   "For remote shutdown, choose the SSH user and the operating system.": "Pentru oprirea de la distanță alege utilizatorul SSH și sistemul de operare.",
+  "For Telegram, also fill in the Chat ID: send your bot a message, then open https://api.telegram.org/bot<token>/getUpdates and copy the number from \"chat\":{\"id\":…}.": "Pentru Telegram completează și Chat ID: trimite-i botului un mesaj, apoi deschide https://api.telegram.org/bot<token>/getUpdates și copiază numărul din \"chat\":{\"id\":…}.",
   "Forget the remembered SSH host key": "Uită amprenta SSH memorată",
   "Fri": "Vi",
   "From": "De la",
