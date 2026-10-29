@@ -172,3 +172,10 @@ def test_pages_have_remembered_view_toggle(admin, path, key, default):
     page = admin.get(path).text
     assert f'data-view-key="{key}" data-view-default="{default}"' in page
     assert f'localStorage.getItem("{key}")' in page
+
+
+def test_settings_cards_fold(admin):
+    page = admin.get("/settings").text
+    for key in ("network", "notifications", "language", "password", "api", "backup"):
+        assert f'<details class="card fold" open data-fold="settings:{key}"' in page
+    assert 'data-fold="settings:api" id="api"' in page

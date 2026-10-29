@@ -138,3 +138,11 @@
 {# Applied before rendering so the page doesn't flash in the other view. #}
 <script>try { document.documentElement.dataset.view = localStorage.getItem("{{ key }}") || "{{ default }}"; } catch (e) { document.documentElement.dataset.view = "{{ default }}"; }</script>
 {%- endmacro %}
+
+{# A card that folds to its title; the folded state is remembered in the browser (data-fold). #}
+{% macro fold(key, icon_name, title, id="") -%}
+<details class="card fold" open data-fold="{{ key }}"{% if id %} id="{{ id }}"{% endif %}>
+  <summary><h2>{{ icon(icon_name) }} {{ title }}{{ icon("chevron-right", "chevron") }}</h2></summary>
+  {{ caller() }}
+</details>
+{%- endmacro %}

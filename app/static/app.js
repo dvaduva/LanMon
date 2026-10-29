@@ -39,6 +39,33 @@ document.addEventListener("toggle", (e) => {
   } catch {}
 }, true);
 
+// Folding cards (Settings): <details data-fold="page:card">, the folded ones are kept in the browser.
+const FOLDED_KEY = "lanmon:folded";
+function foldedCards() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(FOLDED_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const folded = foldedCards();
+  for (const el of document.querySelectorAll("details[data-fold]")) {
+    // A card opened through its anchor (e.g. #api after creating a token) stays open.
+    el.open = !folded.has(el.dataset.fold) || location.hash === "#" + el.id;
+  }
+});
+document.addEventListener("toggle", (e) => {
+  const el = e.target;
+  if (!el.matches || !el.matches("details[data-fold]")) return;
+  const folded = foldedCards();
+  if (el.open) folded.delete(el.dataset.fold);
+  else folded.add(el.dataset.fold);
+  try {
+    localStorage.setItem(FOLDED_KEY, JSON.stringify([...folded]));
+  } catch {}
+}, true);
+
 // List or tiles: the choice is kept in the browser, per page (data-view-key).
 function applyView(view) {
   document.documentElement.dataset.view = view;

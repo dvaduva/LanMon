@@ -151,6 +151,11 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .room .chevron { width: 1rem; height: 1rem; color: var(--muted); transition: transform .15s; }
 .room[open] .chevron { transform: rotate(90deg); }
 .room:not([open]) h2 { margin-bottom: 1rem; }
+.fold > summary { list-style: none; cursor: pointer; user-select: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary h2 .chevron { margin-left: auto; width: 1rem; height: 1rem; color: var(--muted); transition: transform .15s; }
+.fold[open] > summary h2 .chevron { transform: rotate(90deg); }
+.fold:not([open]) > summary h2 { margin-bottom: 0; }
 .room h2 .count { margin-left: auto; font-weight: 400; font-size: .9rem; color: var(--muted); }
 .devices { list-style: none; margin: 0 0 1.25rem; padding: 0; background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius); }

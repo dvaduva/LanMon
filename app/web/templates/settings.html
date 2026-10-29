@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, icon, view_toggle with context %}
+{% from "_macros.html" import ago, csrf, fold, icon, view_toggle with context %}
 {% block title %}{{ _("Settings") }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -9,8 +9,8 @@
 
 <div class="card-grid tileable">
 {% if user.is_admin %}
-<form method="post" action="/settings" class="card">
-  <h2>{{ icon("radar") }} {{ _("Network and intervals") }}</h2>
+{% call fold("settings:network", "radar", _("Network and intervals")) %}
+<form method="post" action="/settings">
   {{ csrf() }}
   <p class="muted small">{{ _("Detected network:") }} {{ network }}</p>
   <label>{{ _("Subnet to scan") }}
@@ -24,9 +24,9 @@
   {% endfor %}
   <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
 </form>
+{% endcall %}
 
-<section class="card">
-  <h2>{{ icon("bell") }} {{ _("Notifications") }}</h2>
+{% call fold("settings:notifications", "bell", _("Notifications")) %}
   <p class="muted small">{% if notify_channels %}{{ _("Active on {channels}.", channels=notify_channels|join(_(" and "))) }}{% else %}{{ _("No channel configured yet.") }}{% endif %}
     {{ _("You choose which devices send “offline” alerts on each device's page.") }}</p>
   <form method="post" action="/settings/notifications">
@@ -75,11 +75,11 @@
     {{ csrf() }}
     <button {{ "disabled" if not notify_channels }}>{{ icon("send") }} {{ _("Send a test message") }}</button>
   </form>
-</section>
+{% endcall %}
 
 {% endif %}
-<form method="post" action="/settings/language" class="card">
-  <h2>{{ icon("languages") }} {{ _("Language") }}</h2>
+{% call fold("settings:language", "languages", _("Language")) %}
+<form method="post" action="/settings/language">
   {{ csrf() }}
   <label>{{ _("Language of the interface") }}
     <select name="language">
@@ -88,9 +88,10 @@
   </label>
   <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
 </form>
+{% endcall %}
 
-<form method="post" action="/settings/password" class="card">
-  <h2>{{ icon("key") }} {{ _("Change password") }}</h2>
+{% call fold("settings:password", "key", _("Change password")) %}
+<form method="post" action="/settings/password">
   <p class="muted small">{{ _("Signed in as {name}.", name=user.username) }}</p>
   {{ csrf() }}
   <label>{{ _("Current password") }} <input type="password" name="current" required autocomplete="current-password"></label>
@@ -98,28 +99,25 @@
   <label>{{ _("Confirm new password") }} <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
   <button class="primary">{{ icon("key") }} {{ _("Change password") }}</button>
 </form>
+{% endcall %}
 
 {% if user.is_admin %}
-<section class="card">
-  <h2>{{ icon("users") }} {{ _("Users") }}</h2>
+{% call fold("settings:users", "users", _("Users")) %}
   <p class="muted small">{{ _("Accounts for the family: members see and control only the devices in their allowed rooms.") }}</p>
   <a class="button" href="/users">{{ icon("users") }} {{ _("Users") }}</a>
-</section>
+{% endcall %}
 
-<section class="card">
-  <h2>{{ icon("calendar-clock") }} {{ _("WOL schedules") }}</h2>
+{% call fold("settings:schedules", "calendar-clock", _("WOL schedules")) %}
   <p class="muted small">{{ _("Wake devices or whole rooms automatically at a fixed time on chosen days.") }}</p>
   <a class="button" href="/schedules">{{ icon("calendar-clock") }} {{ _("Schedules") }}</a>
-</section>
+{% endcall %}
 
-<section class="card">
-  <h2>{{ icon("power-off") }} {{ _("Remote shutdown") }}</h2>
+{% call fold("settings:shutdown", "power-off", _("Remote shutdown")) %}
   <p class="muted small">{{ _("LanMon shuts devices down over SSH with the key below. Add it on each PC, then tick “Allow remote shutdown” on its page. The steps for Windows, Linux and macOS are in the README.") }}</p>
   <textarea class="mono" rows="3" readonly onclick="this.select()">{{ ssh_public_key }}</textarea>
-</section>
+{% endcall %}
 
-<section class="card" id="api">
-  <h2>{{ icon("plug") }} Home Assistant (API)</h2>
+{% call fold("settings:api", "plug", "Home Assistant (API)", id="api") %}
   <p class="muted small">{{ _("Tokens for the REST API (/api/v1): device status, wake-up and shutdown. The Home Assistant setup is described in the README.") }}</p>
   {% if new_token %}
   <div class="notice">
@@ -142,18 +140,16 @@
     <input name="name" placeholder="{{ _("Name, e.g. Home Assistant") }}" maxlength="100" class="grow">
     <button>{{ icon("plus") }} {{ _("New token") }}</button>
   </form>
-</section>
+{% endcall %}
 
-<section class="card">
-  <h2>{{ icon("download") }} Backup</h2>
+{% call fold("settings:backup", "download", "Backup") %}
   <p class="muted small">{{ _("A full copy of the database: devices, rooms, types, history and log. Restoring is described in the README.") }}</p>
   <a class="button" href="/settings/backup">{{ icon("download") }} {{ _("Download backup") }}</a>
-</section>
+{% endcall %}
 
-<section class="card">
-  <h2>{{ icon("eye-off") }} {{ _("Ignored devices") }}</h2>
+{% call fold("settings:ignored", "eye-off", _("Ignored devices")) %}
   <p class="muted small">{{ _('You can restore them from <a href="/unassigned">Unassigned</a>, in the “Ignored” section.')|safe }}</p>
-</section>
+{% endcall %}
 {% endif %}
 </div>
 
