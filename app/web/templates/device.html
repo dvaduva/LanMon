@@ -43,6 +43,7 @@
 </dl>
 </div>
 
+<div class="card-grid">
 <form method="post" action="/devices/{{ device.id }}" class="card">
   <h2>{{ icon("pencil") }} Editare</h2>
   {{ csrf() }}
@@ -58,6 +59,7 @@
   </ul>
   {% else %}<p class="muted">Nicio schimbare de stare încă.</p>{% endif %}
 </section>
+</div>
 
 <form method="post" action="/devices/{{ device.id }}/delete" onsubmit="return confirm('Ștergi „{{ device.name }}”?')">
   {{ csrf() }}

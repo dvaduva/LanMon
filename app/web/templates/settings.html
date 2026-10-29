@@ -4,6 +4,7 @@
 {% block content %}
 <h1>Setări</h1>
 
+<div class="card-grid">
 <form method="post" action="/settings" class="card">
   <h2>{{ icon("radar") }} Rețea și intervale</h2>
   {{ csrf() }}
@@ -40,6 +41,7 @@
   <h2>{{ icon("eye-off") }} Dispozitive ignorate</h2>
   <p class="muted small">Le poți reactiva din <a href="/unassigned">Neasignate</a>, secțiunea „Ignorate”.</p>
 </section>
+</div>
 
 <form method="post" action="/logout">
   {{ csrf() }}
