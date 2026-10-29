@@ -265,7 +265,7 @@ Livrabile, în ordinea de lucru:
 - [x] **WOL programat:** programări pe dispozitiv sau pe cameră (oră + zile ale săptămânii), în fusul orar `LANMON_TZ` (implicit Europe/Bucharest); apar în Jurnal cu sursa „program”.
 - [x] **Verificări pe porturi TCP:** porturi implicite pe tip (ex. PC 3389, NAS 443) și suprascriere pe dispozitiv; la dispozitivele care răspund la ping se verifică porturile, iar starea „rețea OK, serviciu căzut” apare pe Dashboard și în fișă.
 - [x] **Mai mulți utilizatori, cu roluri:** rolurile „administrator” și „membru”; un membru vede și pornește doar dispozitivele din camerele permise. Administratorul gestionează utilizatorii din Setări.
-- [ ] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.
+- [x] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.
 - [ ] **Oprire de la distanță:** prin SSH, cu o cheie generată de aplicație (cheia publică se copiază pe PC); comandă după sistemul de operare (Windows, Linux, macOS); confirmare înainte de oprire; apare în Jurnal.
 - [ ] **Integrare Home Assistant:** API REST cu token (`/api/v1`): lista dispozitivelor cu starea, pornire și oprire; exemple de configurare HA în README.
 
@@ -275,7 +275,7 @@ Criterii de acceptanță:
 - [ ] Un PC programat pentru 8:00 luni–vineri pornește la ora stabilită. *(de verificat pe QNAP, la final)*
 - [ ] Un PC pornit cu serviciul RDP oprit apare „serviciu căzut”. *(de verificat pe QNAP, la final)*
 - [x] Un membru vede doar camerele permise și nu poate accesa paginile de administrare. *(verificat prin teste)*
-- [ ] Fișa dispozitivului arată disponibilitatea pe 7 și 30 de zile.
+- [x] Fișa dispozitivului arată disponibilitatea pe 7 și 30 de zile. *(verificat prin teste)*
 - [ ] Un PC Windows cu OpenSSH se oprește din aplicație. *(de verificat pe QNAP, la final)*
 - [ ] Home Assistant afișează starea unui PC și îl poate porni prin API. *(de verificat la final)*
 

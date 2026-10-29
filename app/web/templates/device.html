@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, device_fields, icon, service_badge, status_dot, wol_badge, wol_hints with context %}
+{% from "_macros.html" import ago, csrf, device_fields, icon, pct, service_badge, status_dot, uptime_bars, wol_badge, wol_hints with context %}
 {% block title %}{{ device.name }} · LanMon{% endblock %}
 {% block content %}
 <div id="live" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body{{ ', every 5s' if waking }}" hx-select="#live" hx-swap="outerHTML">
@@ -60,6 +60,13 @@
   <button class="primary">{{ icon("check") }} Salvează</button>
 </form>
 {% endif %}
+
+<section class="card">
+  <h2>{{ icon("chart-column") }} Disponibilitate</h2>
+  <p class="small"><strong>{{ pct(uptime.percent(7)) }}</strong> <span class="muted">în ultimele 7 zile</span> · <strong>{{ pct(uptime.percent(30)) }}</strong> <span class="muted">în 30 de zile</span></p>
+  {{ uptime_bars(uptime.days[-7:]) }}
+  <a class="small" href="/uptime">Toate dispozitivele</a>
+</section>
 
 <section class="card" id="history" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body" hx-select="#history" hx-swap="outerHTML">
   <h2>Istoric</h2>

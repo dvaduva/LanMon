@@ -1,9 +1,13 @@
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import ActionLog, Device, StatusEvent, User
+from app.services.uptime import device_uptime
 from app.web.deps import Forbidden, admin_user, current_user, flash, get_db, redirect, templates
 from app.web.forms import DeviceForm, choices
 
@@ -29,6 +33,9 @@ def _context(request: Request, db: Session, device: Device, form: DeviceForm, **
         "events": events,
         "last_wol": last_wol,
         "waking": device.id in request.app.state.waker.pending,
+        "uptime": device_uptime(
+            db, device.id, datetime.now(UTC), 30, ZoneInfo(request.app.state.settings.tz)
+        ),
         **choices(db),
         **extra,
     }

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, pct, status_dot, uptime_strip with context %}
+{% block title %}Disponibilitate · LanMon{% endblock %}
+{% block content %}
+<h1>Disponibilitate</h1>
+<p class="muted">Cât timp a fost pornit fiecare dispozitiv, pe ultimele {{ days }} de zile (o celulă = o zi; gri = fără date).</p>
+{% if not groups %}<div class="card empty"><p>Niciun dispozitiv.</p></div>{% endif %}
+{% for group in groups %}
+<section class="card">
+  <h2>{{ icon(group.room.icon if group.room else "door-open") }} {{ group.room.name if group.room else "Fără cameră" }}</h2>
+  <table class="uptime-table">
+    <thead><tr><th>Dispozitiv</th><th class="num">7 zile</th><th class="num">30 de zile</th><th class="strip-col">Ultimele 30 de zile</th></tr></thead>
+    <tbody>
+      {% for d in group.devices %}{% set u = uptimes[d.id] %}
+      <tr>
+        <td><a href="/devices/{{ d.id }}">{{ status_dot(d.status) }} {{ d.name }}</a></td>
+        <td class="num">{{ pct(u.percent(7)) }}</td>
+        <td class="num">{{ pct(u.percent(30)) }}</td>
+        <td class="strip-col">{{ uptime_strip(u.days) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+{% endblock %}

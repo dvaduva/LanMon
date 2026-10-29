@@ -45,6 +45,7 @@ UI_ICONS = [
     "layout-dashboard",
     "layout-grid",
     "bell",
+    "chart-column",
     "user",
     "users",
     "shield-check",

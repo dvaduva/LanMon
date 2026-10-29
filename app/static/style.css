@@ -88,6 +88,24 @@ main { margin: 0; padding: 1rem clamp(1rem, 2vw, 2rem); }
 .list.plain li { gap: .5rem; padding: .5rem 0; border-top: 1px solid var(--border); }
 .list.plain li:first-child { border-top: 0; }
 .list.plain form { margin: 0; }
+.uptime-table { width: 100%; border-collapse: collapse; }
+.uptime-table th { text-align: left; font-weight: 500; color: var(--muted); font-size: .85rem; padding: .3rem .5rem; }
+.uptime-table td { padding: .45rem .5rem; border-top: 1px solid var(--border); }
+.uptime-table td a { color: inherit; display: inline-flex; align-items: center; gap: .5rem; }
+.uptime-table .num { text-align: right; white-space: nowrap; width: 6rem; }
+.uptime-strip { display: inline-flex; gap: 2px; }
+.u-cell { width: .55rem; height: 1.2rem; border-radius: 2px; }
+.u-full { background: var(--online); }
+.u-high { background: color-mix(in srgb, var(--online) 55%, var(--surface)); }
+.u-low { background: color-mix(in srgb, #d97706 70%, var(--surface)); }
+.u-zero { background: color-mix(in srgb, var(--offline) 45%, var(--surface)); }
+.u-none { background: var(--border); }
+@media (max-width: 640px) { .strip-col { display: none; } }
+.uptime-bars { display: flex; gap: .4rem; align-items: flex-end; margin: .5rem 0; }
+.u-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+.u-track { width: 100%; max-width: 2.5rem; height: 4.5rem; background: var(--bg, var(--border)); border-radius: 4px;
+  display: flex; align-items: flex-end; overflow: hidden; border: 1px solid var(--border); }
+.u-fill { width: 100%; }
 .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 .75rem; }
 form.inline { margin-top: .75rem; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 28rem), 1fr));

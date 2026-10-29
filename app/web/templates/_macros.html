@@ -58,6 +58,29 @@
 </label>
 {%- endmacro %}
 
+{% macro pct(value) -%}
+{{ "—" if value is none else ("%.0f%%"|format(value) if value >= 10 or value == 0 else "%.1f%%"|format(value)) }}
+{%- endmacro %}
+
+{% macro uptime_cell_class(p) -%}
+{%- if p is none %}u-none{% elif p >= 99 %}u-full{% elif p >= 50 %}u-high{% elif p > 0 %}u-low{% else %}u-zero{% endif -%}
+{%- endmacro %}
+
+{% macro uptime_strip(days) -%}
+<span class="uptime-strip">{% for day in days %}<span class="u-cell {{ uptime_cell_class(day.percent) }}" title="{{ day.day.strftime('%d.%m') }}: {{ pct(day.percent) }}"></span>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro uptime_bars(days) -%}
+<div class="uptime-bars">
+  {% for day in days %}
+  <div class="u-bar" title="{{ day.day.strftime('%d.%m') }}: {{ pct(day.percent) }}">
+    <div class="u-track"><div class="u-fill {{ uptime_cell_class(day.percent) }}" style="height: {{ (day.percent or 0)|round(1) }}%"></div></div>
+    <span class="small muted">{{ ["Lu","Ma","Mi","Jo","Vi","Sâ","Du"][day.day.weekday()] }}</span>
+  </div>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
 {% macro service_badge(device) -%}
 {%- if device.status == "online" and device.service_status == "down" -%}<span class="badge badge-error" title="Porturi închise: {{ device.closed_ports }}">Serviciu căzut</span>{%- endif -%}
 {%- endmacro %}

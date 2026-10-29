@@ -129,6 +129,14 @@ Pe lângă ping, LanMon poate verifica dacă un serviciu răspunde: porturi impl
 răspunde la ping, la același interval. După două verificări la rând cu porturi închise apare
 „Serviciu căzut” pe Dashboard și în fișă; pentru dispozitivele cu notificări vine și un mesaj.
 
+## Disponibilitate
+
+Butonul „Disponibilitate” de pe Dashboard deschide o pagină cu procentul de timp în care
+fiecare dispozitiv a fost pornit în ultimele 7 și 30 de zile, plus o bară pe zile (verde
+închis = pornit toată ziua, portocaliu = mai puțin de jumătate, gri = fără date). Fișa
+dispozitivului arată aceleași procente și ultimele 7 zile. Calculul folosește istoricul de
+stare, în fusul orar `LANMON_TZ`; timpul dinainte de prima înregistrare nu se ia în calcul.
+
 ## Utilizatori
 
 Setări → Utilizatori (doar pentru administratori). Un **administrator** vede și modifică tot.

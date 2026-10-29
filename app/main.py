@@ -31,6 +31,7 @@ from app.web import (
     live,
     schedules,
     unassigned,
+    uptime,
     users,
     wol,
 )
@@ -137,6 +138,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings_page,
         schedules,
         users,
+        uptime,
     ):
         app.include_router(module.router)
     for router in catalog.routers:
