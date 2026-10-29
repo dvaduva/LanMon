@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, device_fields, icon, status_dot, wol_badge, wol_hints with context %}
+{% from "_macros.html" import ago, csrf, device_fields, icon, service_badge, status_dot, wol_badge, wol_hints with context %}
 {% block title %}{{ device.name }} · LanMon{% endblock %}
 {% block content %}
 <div id="live" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body{{ ', every 5s' if waking }}" hx-select="#live" hx-swap="outerHTML">
@@ -39,6 +39,13 @@
   <dt>MAC</dt><dd><code>{{ device.mac }}</code>{% if device.is_random_mac %} <span class="warn">randomizat</span>{% endif %}</dd>
   <dt>Producător</dt><dd>{{ device.vendor or "—" }}</dd>
   <dt>Hostname</dt><dd>{{ device.hostname or "—" }}</dd>
+  {% if device.effective_ports %}
+  <dt>Servicii</dt><dd>porturi {{ device.effective_ports }}:
+    {% if device.status != "online" %}<span class="muted">verificate când e pornit</span>
+    {% elif device.service_status == "down" %}{{ service_badge(device) }} închise: {{ device.closed_ports }}
+    {% elif device.service_status == "ok" %}<span class="badge badge-ok">OK</span>
+    {% else %}<span class="muted">în curs de verificare</span>{% endif %}</dd>
+  {% endif %}
   <dt>Văzut ultima dată</dt><dd>{{ ago(device.last_seen_at) }}</dd>
   <dt>Adăugat</dt><dd>{{ ago(device.created_at) }}</dd>
 </dl>

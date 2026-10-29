@@ -121,6 +121,14 @@ Europe/Bucharest). Pornesc doar dispozitivele cu WOL care nu sunt deja pornite; 
 ratată pentru că aplicația era oprită mai rulează doar dacă au trecut cel mult 10 minute.
 Pornirile apar în Jurnal ca „programat”.
 
+## Verificări pe porturi TCP
+
+Pe lângă ping, LanMon poate verifica dacă un serviciu răspunde: porturi implicite pe tip
+(Camere → Tipuri, ex. `3389` la PC pentru Remote Desktop) sau proprii în fișa dispozitivului
+(au întâietate; `-` dezactivează verificarea). Porturile se verifică doar când dispozitivul
+răspunde la ping, la același interval. După două verificări la rând cu porturi închise apare
+„Serviciu căzut” pe Dashboard și în fișă; pentru dispozitivele cu notificări vine și un mesaj.
+
 ## Backup și restaurare
 
 - **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,

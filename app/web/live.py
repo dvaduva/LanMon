@@ -12,7 +12,7 @@ from app.web.deps import session_fingerprint
 router = APIRouter()
 
 HEARTBEAT_S = 20
-LIVE_EVENTS = {"device_status", "wol", "scan_completed", "device_discovered"}
+LIVE_EVENTS = {"device_status", "service_status", "wol", "scan_completed", "device_discovered"}
 
 
 def _authenticated(request: Request) -> bool:

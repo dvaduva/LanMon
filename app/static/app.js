@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     timer = setTimeout(() => htmx.trigger(document.body, "lanmon:changed"), 300);
   };
   const source = new EventSource("/events");
-  for (const kind of ["device_status", "wol", "scan_completed", "device_discovered"]) {
+  for (const kind of ["device_status", "service_status", "wol", "scan_completed", "device_discovered"]) {
     source.addEventListener(kind, changed);
   }
 });

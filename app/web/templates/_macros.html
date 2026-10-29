@@ -45,6 +45,10 @@
   <input type="checkbox" name="wol_enabled" {{ "checked" if form.wol_enabled }}>
   <span>Suportă Wake-on-LAN<br><small class="muted">Recomandat doar pentru dispozitive pe cablu.</small></span>
 </label>
+<label>Porturi TCP verificate
+  <input name="check_ports" value="{{ form.check_ports }}" placeholder="implicit: cele ale tipului" autocomplete="off">
+  <small class="muted">Ex. 3389 pentru RDP. Gol = porturile tipului; „-” = fără verificare.</small>
+</label>
 <label class="check">
   <input type="checkbox" name="notify" {{ "checked" if form.notify }}>
   <span>Notifică-mă când e oprit<br><small class="muted">Pragul și canalele se setează în Setări → Notificări.</small></span>
@@ -52,6 +56,10 @@
 <label>Note
   <textarea name="notes" rows="2">{{ form.notes }}</textarea>
 </label>
+{%- endmacro %}
+
+{% macro service_badge(device) -%}
+{%- if device.status == "online" and device.service_status == "down" -%}<span class="badge badge-error" title="Porturi închise: {{ device.closed_ports }}">Serviciu căzut</span>{%- endif -%}
 {%- endmacro %}
 
 {% macro wol_badge(state) -%}

@@ -5,18 +5,23 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, joinedload, sessionmaker
 
 from app.db.models import Device, StatusEvent
 from app.db.settings_store import get_int
 from app.events import Event, EventBus
 from app.services.arptable import read_arp_table
+from app.services.portcheck import closed_ports, parse_ports
 from app.services.scanner import LAST_SEEN_WRITE_EVERY
 
 log = logging.getLogger(__name__)
 
 ONLINE, OFFLINE, UNKNOWN = "online", "offline", "unknown"
 PingMany = Callable[[list[str]], Awaitable[set[str]]]
+PortProbe = Callable[[str, list[int]], Awaitable[list[int]]]
+SERVICE_OK, SERVICE_DOWN = "ok", "down"
+# „Serviciu căzut” abia după atâtea cicluri consecutive cu porturi închise.
+SERVICE_DOWN_AFTER = 2
 
 
 class StatusTracker:
@@ -55,6 +60,9 @@ class Target:
     mac: str
     ip: str | None
     status: str
+    ports: tuple[int, ...] = ()
+    service_status: str | None = None
+    closed: str | None = None
 
 
 @dataclass(frozen=True)
@@ -63,6 +71,8 @@ class Outcome:
     alive: bool
     ip: str | None
     new_status: str | None
+    # (stare serviciu, porturi închise) când se schimbă față de ce e în DB, altfel None
+    service: tuple[str | None, str | None] | None = None
 
 
 class Pinger:
@@ -76,7 +86,10 @@ class Pinger:
         arp_lookup: Callable[[], dict[str, str]] = read_arp_table,
         extra_arp: Callable[[], dict[str, str]] | None = None,
         tracker: StatusTracker | None = None,
+        port_probe: PortProbe = closed_ports,
     ) -> None:
+        self._port_probe = port_probe
+        self._service_failures: dict[int, int] = {}
         self._session_factory = session_factory
         self._events = events
         self._ping_many = ping_many
@@ -101,8 +114,49 @@ class Pinger:
 
     def _load_targets(self) -> list[Target]:
         with self._session_factory() as session:
-            rows = session.execute(select(Device.id, Device.mac, Device.last_ip, Device.status))
-            return [Target(*row) for row in rows]
+            devices = session.scalars(select(Device).options(joinedload(Device.type)))
+            targets = []
+            for d in devices:
+                try:
+                    ports = tuple(parse_ports(d.effective_ports))
+                except ValueError:
+                    ports = ()
+                targets.append(
+                    Target(
+                        d.id, d.mac, d.last_ip, d.status, ports, d.service_status, d.closed_ports
+                    )
+                )
+            return targets
+
+    async def _check_services(self, outcomes: list[Outcome]) -> list[Outcome]:
+        """Porturile TCP, doar pentru dispozitivele care răspund la ping."""
+        checked = [o for o in outcomes if o.alive and o.ip and o.target.ports]
+        results = await asyncio.gather(
+            *(self._port_probe(o.ip, list(o.target.ports)) for o in checked)
+        )
+        closed_by_id = {o.target.id: c for o, c in zip(checked, results, strict=True)}
+        updated = []
+        for o in outcomes:
+            t = o.target
+            if t.id in closed_by_id:
+                closed = closed_by_id[t.id]
+                if closed:
+                    failures = self._service_failures.get(t.id, 0) + 1
+                    self._service_failures[t.id] = failures
+                    if failures >= SERVICE_DOWN_AFTER or t.service_status == SERVICE_DOWN:
+                        wanted = (SERVICE_DOWN, ", ".join(map(str, closed)))
+                    else:
+                        wanted = (t.service_status, t.closed)  # încă nu e sigur
+                else:
+                    self._service_failures[t.id] = 0
+                    wanted = (SERVICE_OK, None)
+            else:
+                self._service_failures.pop(t.id, None)
+                wanted = (None, None)
+            current = (t.service_status, t.closed)
+            service = wanted if wanted != current else None
+            updated.append(Outcome(t, o.alive, o.ip, o.new_status, service))
+        return updated
 
     def _arp_table(self) -> dict[str, str]:
         table = dict(self._extra_arp() if self._extra_arp else {})
@@ -136,12 +190,16 @@ class Pinger:
             new_status = self._tracker.observe(target.id, target.status, is_alive)
             outcomes.append(Outcome(target, is_alive, ip, new_status))
 
+        outcomes = await self._check_services(outcomes)
         await asyncio.to_thread(self._apply, outcomes, now)
 
         for o in outcomes:
             if o.new_status:
                 data = {"device_id": o.target.id, "status": o.new_status, "ip": o.ip}
                 self._events.publish(Event("device_status", data))
+            if o.service:
+                data = {"device_id": o.target.id, "service": o.service[0], "closed": o.service[1]}
+                self._events.publish(Event("service_status", data))
         return outcomes
 
     def _apply(self, outcomes: list[Outcome], now: datetime) -> None:
@@ -155,7 +213,7 @@ class Pinger:
                     or written is None
                     or now - written >= LAST_SEEN_WRITE_EVERY
                 )
-                if not (o.new_status or ip_changed or flush_seen):
+                if not (o.new_status or ip_changed or flush_seen or o.service):
                     continue
 
                 device = session.get(Device, o.target.id)
@@ -166,6 +224,8 @@ class Pinger:
                 if flush_seen:
                     device.last_seen_at = last_seen
                     self._last_seen_written[o.target.id] = now
+                if o.service:
+                    device.service_status, device.closed_ports = o.service
                 if o.new_status:
                     device.status = o.new_status
                     device.status_changed_at = now

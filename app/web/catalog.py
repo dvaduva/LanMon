@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Device, DeviceType, Room, User
 from app.icons import ROOM_ICONS, TYPE_ICONS
+from app.services.portcheck import format_ports, parse_ports
 from app.web.deps import current_user, flash, get_db, redirect, templates
 
 
@@ -20,11 +21,12 @@ class Catalog:
     title: str
     other: str  # „altă cameră” / „alt tip”
     icons: list[str]
+    has_ports: bool = False
 
 
 CATALOGS = [
     Catalog(Room, Device.room_id, "/rooms", "Camere", "altă cameră", ROOM_ICONS),
-    Catalog(DeviceType, Device.type_id, "/types", "Tipuri", "alt tip", TYPE_ICONS),
+    Catalog(DeviceType, Device.type_id, "/types", "Tipuri", "alt tip", TYPE_ICONS, has_ports=True),
 ]
 
 
@@ -43,6 +45,14 @@ def make_router(c: Catalog) -> APIRouter:
         return templates.TemplateResponse(
             request, template, {"catalog": c, **context}, status_code=status_code
         )
+
+    def ports_or_error(text: str) -> tuple[str | None, str | None]:
+        if not c.has_ports:
+            return None, None
+        try:
+            return format_ports(parse_ports(text)), None
+        except ValueError as exc:
+            return None, f"{exc}. Exemplu: 3389 sau 22, 443."
 
     def validate(db: Session, name: str, item_id: int | None) -> str | None:
         if not name:
@@ -64,7 +74,13 @@ def make_router(c: Catalog) -> APIRouter:
     @router.get("/new")
     def new(request: Request, user: User = Depends(current_user)) -> Response:
         return render(
-            request, "catalog_form.html", item=None, name="", selected_icon=c.icons[0], sort_order=0
+            request,
+            "catalog_form.html",
+            item=None,
+            name="",
+            selected_icon=c.icons[0],
+            sort_order=0,
+            check_ports="",
         )
 
     @router.post("/new")
@@ -73,11 +89,13 @@ def make_router(c: Catalog) -> APIRouter:
         name: str = Form(""),
         icon: str = Form(""),
         sort_order: int = Form(0),
+        check_ports: str = Form(""),
         user: User = Depends(current_user),
         db: Session = Depends(get_db),
     ) -> Response:
         name = name.strip()
-        error = validate(db, name, None)
+        ports, ports_error = ports_or_error(check_ports)
+        error = validate(db, name, None) or ports_error
         if error:
             return render(
                 request,
@@ -87,9 +105,13 @@ def make_router(c: Catalog) -> APIRouter:
                 name=name,
                 selected_icon=icon,
                 sort_order=sort_order,
+                check_ports=check_ports,
                 error=error,
             )
-        db.add(c.model(name=name, icon=icon if icon in c.icons else None, sort_order=sort_order))
+        item = c.model(name=name, icon=icon if icon in c.icons else None, sort_order=sort_order)
+        if c.has_ports:
+            item.check_ports = ports
+        db.add(item)
         db.commit()
         flash(request, f"„{name}” a fost adăugat.")
         return redirect(request, c.path)
@@ -111,6 +133,7 @@ def make_router(c: Catalog) -> APIRouter:
             name=item.name,
             selected_icon=item.icon,
             sort_order=item.sort_order,
+            check_ports=getattr(item, "check_ports", None) or "",
             used=usage(db).get(item.id, 0),
         )
 
@@ -121,6 +144,7 @@ def make_router(c: Catalog) -> APIRouter:
         name: str = Form(""),
         icon: str = Form(""),
         sort_order: int = Form(0),
+        check_ports: str = Form(""),
         user: User = Depends(current_user),
         db: Session = Depends(get_db),
     ) -> Response:
@@ -128,7 +152,8 @@ def make_router(c: Catalog) -> APIRouter:
         if item is None:
             return redirect(request, c.path)
         name = name.strip()
-        error = validate(db, name, item.id)
+        ports, ports_error = ports_or_error(check_ports)
+        error = validate(db, name, item.id) or ports_error
         if error:
             return render(
                 request,
@@ -138,10 +163,13 @@ def make_router(c: Catalog) -> APIRouter:
                 name=name,
                 selected_icon=icon,
                 sort_order=sort_order,
+                check_ports=check_ports,
                 used=usage(db).get(item.id, 0),
                 error=error,
             )
         item.name = name
+        if c.has_ports:
+            item.check_ports = ports
         item.icon = icon if icon in c.icons else item.icon
         item.sort_order = sort_order
         db.commit()

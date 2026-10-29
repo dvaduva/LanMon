@@ -48,6 +48,8 @@ class DeviceType(Base):
     icon: Mapped[str | None] = mapped_column(String(50))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_builtin: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Porturi TCP verificate implicit la dispozitivele de acest tip, ex. „3389” sau „22, 443”.
+    check_ports: Mapped[str | None] = mapped_column(String(100))
 
 
 class Device(Base):
@@ -71,10 +73,20 @@ class Device(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     # Notificare când stă oprit mai mult de pragul din Setări (și când revine).
     notify: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    # Porturi proprii (au întâietate față de cele ale tipului); „-” = fără verificare.
+    check_ports: Mapped[str | None] = mapped_column(String(100))
+    service_status: Mapped[str | None] = mapped_column(String(10))  # ok / down / None
+    closed_ports: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
     room: Mapped[Room | None] = relationship(back_populates="devices")
     type: Mapped[DeviceType | None] = relationship()
+
+    @property
+    def effective_ports(self) -> str | None:
+        if self.check_ports == "-":
+            return None
+        return self.check_ports or (self.type.check_ports if self.type else None)
 
 
 class Discovered(Base):

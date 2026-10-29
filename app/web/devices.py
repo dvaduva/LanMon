@@ -50,6 +50,7 @@ def detail(
         type_id=device.type_id,
         wol_enabled=device.wol_enabled,
         notify=device.notify,
+        check_ports=device.check_ports or "",
         notes=device.notes or "",
     )
     return templates.TemplateResponse(request, "device.html", _context(request, db, device, form))

@@ -7,6 +7,12 @@
   {{ csrf() }}
   <label>Nume <input name="name" value="{{ name }}" required maxlength="100"></label>
   <label>Ordine <input type="number" name="sort_order" value="{{ sort_order }}" step="1"></label>
+  {% if catalog.has_ports %}
+  <label>Porturi TCP verificate
+    <input name="check_ports" value="{{ check_ports }}" placeholder="ex. 3389 (RDP), 22 (SSH), 443" autocomplete="off">
+    <small class="muted">Implicit pentru dispozitivele de acest tip, când răspund la ping. Gol = fără verificare.</small>
+  </label>
+  {% endif %}
   <fieldset><legend>Iconiță</legend>{{ icon_picker(catalog.icons, selected_icon) }}</fieldset>
   <div class="actions">
     <button class="primary">{{ icon("check") }} Salvează</button>

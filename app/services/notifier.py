@@ -152,6 +152,7 @@ class Notifier:
         self._check_every = check_every
         # Dispozitive pentru care s-a trimis „oprit”; la revenire se trimite „a revenit”.
         self.offline_notified: set[int] = set()
+        self.service_down_notified: set[int] = set()
 
     def prime(self) -> None:
         """La pornire nu se notifică din nou dispozitivele deja oprite."""
@@ -196,6 +197,8 @@ class Notifier:
             await self._new_device(event.data["mac"])
         elif event.kind == "wol" and event.data.get("result") in ("timeout", "error"):
             await self._wol_failed(event.data["device_id"], event.data["result"])
+        elif event.kind == "service_status" and event.data.get("service") in ("down", "ok"):
+            await self._service(event.data["device_id"], event.data["service"], event.data)
 
     async def _new_device(self, mac: str) -> None:
         def load():
@@ -228,6 +231,26 @@ class Notifier:
             "nu a răspuns în timpul de așteptare" if result == "timeout" else "eroare la trimitere"
         )
         await self._notify(config, f"Pornirea {name} a eșuat: {reason}.")
+
+    async def _service(self, device_id: int, service: str, data: dict) -> None:
+        def load():
+            with self._session_factory() as session:
+                device = session.get(Device, device_id)
+                if device is None or not device.notify:
+                    return load_config(session), None
+                return load_config(session), device.name
+
+        config, name = await asyncio.to_thread(load)
+        if name is None:
+            return
+        if service == "down":
+            await self._notify(
+                config, f"{name}: serviciu căzut (porturi închise: {data['closed']})."
+            )
+            self.service_down_notified.add(device_id)
+        elif device_id in self.service_down_notified:
+            self.service_down_notified.discard(device_id)
+            await self._notify(config, f"{name}: serviciile răspund din nou.")
 
     async def check_offline(self, now: datetime | None = None) -> None:
         now = now or datetime.now(UTC)
