@@ -171,3 +171,25 @@ details.ignored li { padding: .5rem 0; border-top: 1px solid var(--border); }
 .hints { margin: .5rem 0 0; padding-left: 1.2rem; font-size: .9rem; }
 .hints li + li { margin-top: .25rem; }
 .summary { margin: -.5rem 0 1rem; }
+
+@media (max-width: 480px) {
+  .wide-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+.head-actions { display: flex; align-items: center; gap: .5rem; }
+.segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.segmented button { border: 0; border-radius: 0; min-height: 2.5rem; width: 2.6rem; padding: 0; color: var(--muted); }
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button[aria-pressed="true"] { color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+
+/* Afișare ca tile-uri: aceleași elemente, așezate în grilă. */
+[data-view="tiles"] .devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: .6rem; background: none; border: 0; }
+[data-view="tiles"] .devices li { position: relative; align-items: stretch; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); }
+[data-view="tiles"] .devices li + li { border-top: 1px solid var(--border); }
+[data-view="tiles"] .devices a { flex-wrap: wrap; align-content: flex-start; gap: .5rem .6rem; padding: .9rem; }
+[data-view="tiles"] .devices a > .icon.type { width: 1.6rem; height: 1.6rem; }
+[data-view="tiles"] .devices .label, [data-view="tiles"] .devices .ip { flex-basis: 100%; }
+[data-view="tiles"] .devices .name { font-weight: 600; }
+[data-view="tiles"] .devices form { position: absolute; top: .35rem; right: .35rem; margin: 0; }

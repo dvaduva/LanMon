@@ -38,6 +38,31 @@ document.addEventListener("toggle", (e) => {
   } catch {}
 }, true);
 
+// Dashboard: listă sau tile-uri, alegere ținută în browser.
+const VIEW_KEY = "lanmon:view";
+function applyView(view) {
+  if (view === "tiles") document.documentElement.dataset.view = "tiles";
+  else delete document.documentElement.dataset.view;
+  for (const b of document.querySelectorAll("[data-view-toggle]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.viewToggle === (view || "list")));
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  let view = null;
+  try {
+    view = localStorage.getItem(VIEW_KEY);
+  } catch {}
+  applyView(view);
+});
+document.addEventListener("click", (e) => {
+  const button = e.target.closest && e.target.closest("[data-view-toggle]");
+  if (!button) return;
+  applyView(button.dataset.viewToggle);
+  try {
+    localStorage.setItem(VIEW_KEY, button.dataset.viewToggle);
+  } catch {}
+});
+
 // Actualizare live: evenimentele SSE declanșează reîmprospătarea fragmentelor HTMX
 // (elementele cu hx-trigger="lanmon:changed from:body").
 document.addEventListener("DOMContentLoaded", () => {

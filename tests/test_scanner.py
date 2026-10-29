@@ -148,3 +148,8 @@ def test_dashboard_rooms_are_collapsible(admin):
     page = admin.get("/").text
     assert '<details class="room" open data-room="' in page
     assert "<summary>" in page
+
+
+def test_dashboard_has_list_and_tiles_toggle(admin):
+    page = admin.get("/").text
+    assert 'data-view-toggle="list"' in page and 'data-view-toggle="tiles"' in page

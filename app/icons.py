@@ -43,6 +43,7 @@ TYPE_ICONS = [
 
 UI_ICONS = [
     "layout-dashboard",
+    "layout-grid",
     "inbox",
     "tag",
     "key",
