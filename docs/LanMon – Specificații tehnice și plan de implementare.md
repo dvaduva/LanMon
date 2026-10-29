@@ -166,7 +166,7 @@ Uvicorn rulează cu un singur worker, pentru că scanerul și ping-ul sunt task-
 
 ## Plan de implementare pe faze
 
-> **Stare (25 oct 2026):** Fazele 0–4 sunt implementate pe `main`; versiunea 1.0 e gata de release. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
+> **Stare (29 oct 2026):** Fazele 0–5 sunt implementate pe `main`; versiunea 1.0 e gata de release. Faza 6 (backlog-ul de după 1.0) e în lucru. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
 
 Versiunea 1.0 se livrează în 5 faze, cu aproximativ 14–19 zile de lucru pentru un dezvoltator (estimare). Faza 0 verifică devreme cel mai mare risc: dacă ARP, ping-ul și broadcast-ul WOL funcționează din container pe QNAP. Fiecare fază se încheie cu o versiune instalată pe QNAP.
 
@@ -247,14 +247,46 @@ Criterii de acceptanță:
 - [x] Restaurarea unui backup pe o instalare nouă readuce dispozitivele, camerele și istoricul. *(verificat prin teste)*
 - [ ] Un update de versiune se face doar cu `docker compose pull && docker compose up -d`, fără pierdere de date. *(de verificat pe QNAP, la final)*
 
+### Faza 5 — Îmbunătățiri după 1.0
+
+Livrabile:
+
+- [x] Camere colapsabile pe Dashboard; starea se păstrează în browser.
+- [x] Dashboard afișat ca listă sau ca tile-uri, la alegere.
+- [x] Layout pe toată lățimea ecranului; pe ecrane late, cardurile din Setări și din fișă stau pe coloane.
+- [x] Rulare locală pe Windows: date implicit în `./data`, mesaj clar (fără traceback) când lipsește Npcap, teste stabile pe Windows.
+- [x] Npcap instalat pe PC-ul de dezvoltare.
+
+### Faza 6 — Backlog după 1.0
+
+Livrabile, în ordinea de lucru:
+
+- [ ] **Notificări:** Telegram (bot) și email (SMTP), configurate din Setări, cu mesaj de test. Reguli: dispozitiv marcat „cu notificări” offline de cel puțin X minute (și revenit), dispozitiv nou necunoscut în rețea, pornire WOL eșuată.
+- [ ] **WOL programat:** programări pe dispozitiv sau pe cameră (oră + zile ale săptămânii), în fusul orar `LANMON_TZ` (implicit Europe/Bucharest); apar în Jurnal cu sursa „program”.
+- [ ] **Verificări pe porturi TCP:** porturi implicite pe tip (ex. PC 3389, NAS 443) și suprascriere pe dispozitiv; la dispozitivele care răspund la ping se verifică porturile, iar starea „rețea OK, serviciu căzut” apare pe Dashboard și în fișă.
+- [ ] **Mai mulți utilizatori, cu roluri:** rolurile „administrator” și „membru”; un membru vede și pornește doar dispozitivele din camerele permise. Administratorul gestionează utilizatorii din Setări.
+- [ ] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.
+- [ ] **Oprire de la distanță:** prin SSH, cu o cheie generată de aplicație (cheia publică se copiază pe PC); comandă după sistemul de operare (Windows, Linux, macOS); confirmare înainte de oprire; apare în Jurnal.
+- [ ] **Integrare Home Assistant:** API REST cu token (`/api/v1`): lista dispozitivelor cu starea, pornire și oprire; exemple de configurare HA în README.
+
+Criterii de acceptanță:
+
+- [ ] Un mesaj de test ajunge pe Telegram și pe email; un PC marcat oprit mai mult de X minute generează o notificare. *(de verificat pe QNAP, la final)*
+- [ ] Un PC programat pentru 8:00 luni–vineri pornește la ora stabilită. *(de verificat pe QNAP, la final)*
+- [ ] Un PC pornit cu serviciul RDP oprit apare „serviciu căzut”. *(de verificat pe QNAP, la final)*
+- [ ] Un membru vede doar camerele permise și nu poate accesa paginile de administrare.
+- [ ] Fișa dispozitivului arată disponibilitatea pe 7 și 30 de zile.
+- [ ] Un PC Windows cu OpenSSH se oprește din aplicație. *(de verificat pe QNAP, la final)*
+- [ ] Home Assistant afișează starea unui PC și îl poate porni prin API. *(de verificat la final)*
+
 ## Faze viitoare (backlog)
 
-Acestea sunt amânate în mod deliberat după 1.0, în ordinea probabilă a utilității.
+Backlog-ul inițial, păstrat pentru context. Toate elementele de mai jos sunt planificate în Faza 6.
 
 | Funcționalitate | Ce adaugă | Impact asupra arhitecturii |
 | --- | --- | --- |
 | Notificări | Telegram (bot) sau email: dispozitiv offline de X minute, dispozitiv nou necunoscut | Un serviciu de notificare + reguli în `settings` |
-| WOL programat | Ex. „PC birou la 8:00, luni–vineri” | Tabel `schedules` + scheduler (APScheduler) |
+| WOL programat | Ex. „PC birou la 8:00, luni–vineri” | Tabel `schedules` + scheduler propriu în `lifespan` |
 | Verificări suplimentare de stare | Porturi TCP per tip de dispozitiv (RDP 3389, SSH 22, HTTP 80), stare „rețea OK, serviciu căzut” | Câmp de metodă de verificare pe tip/dispozitiv |
 | Mai mulți utilizatori și roluri | „Membru familie” vede statusul și pornește doar anumite dispozitive sau camere | Tabele `roles` și permisiuni pe cameră/dispozitiv |
 | Grafice de disponibilitate | Uptime pe zi/săptămână per dispozitiv | Agregări din `status_events` |
