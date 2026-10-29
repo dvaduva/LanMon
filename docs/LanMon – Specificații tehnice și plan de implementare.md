@@ -262,7 +262,7 @@ Livrabile:
 Livrabile, în ordinea de lucru:
 
 - [x] **Notificări:** Telegram (bot) și email (SMTP), configurate din Setări, cu mesaj de test. Reguli: dispozitiv marcat „cu notificări” offline de cel puțin X minute (și revenit), dispozitiv nou necunoscut în rețea, pornire WOL eșuată.
-- [ ] **WOL programat:** programări pe dispozitiv sau pe cameră (oră + zile ale săptămânii), în fusul orar `LANMON_TZ` (implicit Europe/Bucharest); apar în Jurnal cu sursa „program”.
+- [x] **WOL programat:** programări pe dispozitiv sau pe cameră (oră + zile ale săptămânii), în fusul orar `LANMON_TZ` (implicit Europe/Bucharest); apar în Jurnal cu sursa „program”.
 - [ ] **Verificări pe porturi TCP:** porturi implicite pe tip (ex. PC 3389, NAS 443) și suprascriere pe dispozitiv; la dispozitivele care răspund la ping se verifică porturile, iar starea „rețea OK, serviciu căzut” apare pe Dashboard și în fișă.
 - [ ] **Mai mulți utilizatori, cu roluri:** rolurile „administrator” și „membru”; un membru vede și pornește doar dispozitivele din camerele permise. Administratorul gestionează utilizatorii din Setări.
 - [ ] **Grafice de uptime:** disponibilitatea pe ultimele 7 și 30 de zile, calculată din `status_events`, în fișa dispozitivului și într-o pagină de ansamblu.

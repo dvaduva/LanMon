@@ -21,6 +21,7 @@ from app.services.notifier import Notifier, deliver
 from app.services.pinger import Pinger
 from app.services.retention import run_nightly
 from app.services.scanner import Scanner
+from app.services.scheduler import Scheduler
 from app.services.waker import Waker
 from app.web import (
     auth,
@@ -28,6 +29,7 @@ from app.web import (
     dashboard,
     devices,
     live,
+    schedules,
     unassigned,
     wol,
 )
@@ -69,6 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 asyncio.create_task(app.state.pinger.run(), name="pinger"),
                 asyncio.create_task(run_nightly(app.state.session_factory), name="retention"),
                 asyncio.create_task(app.state.notifier.run(), name="notifier"),
+                asyncio.create_task(app.state.scheduler.run(), name="scheduler"),
             ]
         yield
         for task in tasks:
@@ -116,13 +119,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.events,
         extra_arp=lambda: {mac: seen.ip for mac, seen in app.state.scanner.seen.items()},
     )
+    app.state.scheduler = Scheduler(app.state.session_factory, app.state.waker, settings.tz)
     app.state.notify_send = deliver
     app.state.notifier = Notifier(
         app.state.session_factory, app.state.events, send=lambda *a: app.state.notify_send(*a)
     )
     app.state.login_limiter = LoginLimiter()
     app.include_router(health_router)
-    for module in (auth, dashboard, unassigned, devices, wol, live, settings_page):
+    for module in (auth, dashboard, unassigned, devices, wol, live, settings_page, schedules):
         app.include_router(module.router)
     for router in catalog.routers:
         app.include_router(router)

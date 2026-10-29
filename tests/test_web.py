@@ -71,6 +71,10 @@ PROTECTED = [
     ("POST", "/devices/1/wake"),
     ("POST", "/rooms/1/wake"),
     ("GET", "/log"),
+    ("GET", "/schedules"),
+    ("POST", "/schedules"),
+    ("POST", "/schedules/1/toggle"),
+    ("POST", "/schedules/1/delete"),
     *[
         (method, f"{prefix}{suffix}")
         for prefix in ("/rooms", "/types")

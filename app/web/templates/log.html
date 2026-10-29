@@ -13,7 +13,7 @@
       <div class="grow">
         {% if e.action == "wol" %}
         <strong>{% if e.device %}<a href="/devices/{{ e.device.id }}">{{ e.device.name }}</a>{% else %}Dispozitiv șters{% endif %}</strong>
-        <span class="muted small">· {{ "toată camera" if e.source == "room" else "manual" }}</span>
+        <span class="muted small">· {{ {"room": "toată camera", "schedule": "programat"}.get(e.source, "manual") }}</span>
         {% else %}
         <strong>Scanare manuală</strong>
         {% endif %}

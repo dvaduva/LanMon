@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     interface: str | None = None
     secret_key: str = ""
     log_level: str = "info"
+    # Fusul orar pentru programările WOL.
+    tz: str = "Europe/Bucharest"
     version: str = "dev"
     # Cookie-ul de sesiune doar prin HTTPS (ex. în spatele `tailscale serve`).
     cookie_secure: bool = False

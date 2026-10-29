@@ -113,6 +113,14 @@ Butonul „Trimite un mesaj de test” verifică imediat configurarea. Reguli: u
 un dispozitiv nou necunoscut apare în rețea, o pornire WOL eșuează. Token-ul și parola stau în
 baza de date din `/data`, deci și în backup.
 
+## Programări WOL
+
+Setări → Programări WOL (sau linkul din cardul Wake-on-LAN al unui dispozitiv): un dispozitiv
+sau toată camera, la o oră și în anumite zile. Ora e în fusul `LANMON_TZ` (implicit
+Europe/Bucharest). Pornesc doar dispozitivele cu WOL care nu sunt deja pornite; o programare
+ratată pentru că aplicația era oprită mai rulează doar dacă au trecut cel mult 10 minute.
+Pornirile apar în Jurnal ca „programat”.
+
 ## Backup și restaurare
 
 - **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,

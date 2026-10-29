@@ -118,6 +118,24 @@ class ActionLog(Base):
     device: Mapped[Device | None] = relationship()
 
 
+class Schedule(Base):
+    """Pornire WOL programată pentru un dispozitiv sau pentru toată camera."""
+
+    __tablename__ = "schedules"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"))
+    room_id: Mapped[int | None] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"))
+    time: Mapped[str] = mapped_column(String(5))  # HH:MM, ora locală (LANMON_TZ)
+    weekdays: Mapped[str] = mapped_column(String(7))  # cifre 0–6, luni = 0
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
+
+    device: Mapped[Device | None] = relationship()
+    room: Mapped[Room | None] = relationship()
+
+
 class Setting(Base):
     __tablename__ = "settings"
 

@@ -18,6 +18,7 @@
       <strong>Wake-on-LAN</strong>
       {% if waking %}{{ wol_badge("waking") }}
       {% elif last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
+      <div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>
     </div>
     {% if device.status != "online" and not waking %}
     <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} Pornește</button></form>

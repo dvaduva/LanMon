@@ -45,6 +45,7 @@ UI_ICONS = [
     "layout-dashboard",
     "layout-grid",
     "bell",
+    "calendar-clock",
     "send",
     "inbox",
     "tag",

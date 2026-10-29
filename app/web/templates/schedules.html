@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ago, csrf, icon with context %}
+{% block title %}Programări · LanMon{% endblock %}
+{% block content %}
+<h1>Programări WOL</h1>
+<p class="muted">Pornire automată la oră fixă (fus orar {{ tz }}). Se pornesc doar dispozitivele cu Wake-on-LAN care nu sunt deja pornite.</p>
+
+<div class="card-grid">
+<section class="card">
+  <h2>{{ icon("calendar-clock") }} Programări</h2>
+  {% if not schedules %}<p class="muted">Nicio programare încă.</p>{% endif %}
+  <ul class="list plain">
+    {% for s in schedules %}
+    <li class="row{{ ' muted' if not s.enabled }}">
+      {{ icon(s.room.icon if s.room else "power") }}
+      <div class="grow">
+        <strong>{{ s.device.name if s.device else ("Toată camera " ~ s.room.name) }}</strong>
+        <div class="small muted">{{ s.time }} · {{ describe_days(s.weekdays) }}{% if not s.enabled %} · dezactivată{% endif %}{% if s.last_run_at %} · ultima rulare {{ ago(s.last_run_at) }}{% endif %}</div>
+      </div>
+      <form method="post" action="/schedules/{{ s.id }}/toggle">{{ csrf() }}<button title="{{ 'Dezactivează' if s.enabled else 'Activează' }}">{{ "Dezactivează" if s.enabled else "Activează" }}</button></form>
+      <form method="post" action="/schedules/{{ s.id }}/delete" onsubmit="return confirm('Ștergi programarea?')">{{ csrf() }}<button class="danger icon-button" title="Șterge">{{ icon("trash-2") }}<span class="sr">Șterge</span></button></form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<form method="post" action="/schedules" class="card">
+  <h2>{{ icon("plus") }} Programare nouă</h2>
+  {{ csrf() }}
+  <label>Ce pornește
+    <select name="target" required>
+      <option value="">Alege…</option>
+      {% if devices %}<optgroup label="Dispozitive cu WOL">
+        {% for d in devices %}<option value="device:{{ d.id }}" {{ "selected" if values.target == "device:" ~ d.id }}>{{ d.name }}</option>{% endfor %}
+      </optgroup>{% endif %}
+      {% if rooms %}<optgroup label="Toată camera">
+        {% for r in rooms %}<option value="room:{{ r.id }}" {{ "selected" if values.target == "room:" ~ r.id }}>{{ r.name }}</option>{% endfor %}
+      </optgroup>{% endif %}
+    </select>
+    {% if not devices %}<small class="muted">Niciun dispozitiv nu are Wake-on-LAN bifat în fișă.</small>{% endif %}
+  </label>
+  <label>Ora <input type="time" name="time" value="{{ values.time }}" required></label>
+  <fieldset>
+    <legend>Zile</legend>
+    <div class="days">
+      {% for name in weekdays %}<label class="check"><input type="checkbox" name="days" value="{{ loop.index0 }}" {{ "checked" if (loop.index0|string) in values.days }}><span>{{ name }}</span></label>{% endfor %}
+    </div>
+  </fieldset>
+  <button class="primary">{{ icon("check") }} Adaugă</button>
+</form>
+</div>
+{% endblock %}

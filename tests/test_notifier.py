@@ -135,7 +135,8 @@ def test_run_loop_handles_events_and_periodic_checks(session_factory):
         task.cancel()
 
     asyncio.run(scenario())
-    assert outbox.sent == [
+    # Ordinea depinde de ceas (pe Windows are rezoluție de ~15 ms); contează că ambele au plecat.
+    assert sorted(outbox.sent) == [
         "Dispozitiv nou în rețea: 11:22:33:44:55:66",
         "PC birou e oprit de 15 min.",
     ]
