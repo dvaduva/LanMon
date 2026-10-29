@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, icon, icon_picker with context %}
-{% block title %}{{ catalog.title }} · LanMon{% endblock %}
+{% block title %}{{ _(catalog.title) }} · LanMon{% endblock %}
 {% block content %}
-<h1>{{ item.name if item else "Adaugă" }}</h1>
+<h1>{{ type_name(item) if item else _("Add") }}</h1>
 <form method="post" action="{{ catalog.path }}/{{ item.id if item else 'new' }}" class="card">
   {{ csrf() }}
-  <label>Nume <input name="name" value="{{ name }}" required maxlength="100"></label>
-  <label>Ordine <input type="number" name="sort_order" value="{{ sort_order }}" step="1"></label>
+  <label>{{ _("Name") }} <input name="name" value="{{ name }}" required maxlength="100"></label>
+  <label>{{ _("Order") }} <input type="number" name="sort_order" value="{{ sort_order }}" step="1"></label>
   {% if catalog.has_ports %}
-  <label>Porturi TCP verificate
-    <input name="check_ports" value="{{ check_ports }}" placeholder="ex. 3389 (RDP), 22 (SSH), 443" autocomplete="off">
-    <small class="muted">Implicit pentru dispozitivele de acest tip, când răspund la ping. Gol = fără verificare.</small>
+  <label>{{ _("Checked TCP ports") }}
+    <input name="check_ports" value="{{ check_ports }}" placeholder="{{ _("e.g. {example}", example="3389 (RDP), 22 (SSH), 443") }}" autocomplete="off">
+    <small class="muted">{{ _("Default for devices of this type, while they answer ping. Empty = no check.") }}</small>
   </label>
   {% endif %}
-  <fieldset><legend>Iconiță</legend>{{ icon_picker(catalog.icons, selected_icon) }}</fieldset>
+  <fieldset><legend>{{ _("Icon") }}</legend>{{ icon_picker(catalog.icons, selected_icon) }}</fieldset>
   <div class="actions">
-    <button class="primary">{{ icon("check") }} Salvează</button>
-    <a class="button" href="{{ catalog.path }}">Renunță</a>
+    <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
+    <a class="button" href="{{ catalog.path }}">{{ _("Cancel") }}</a>
   </div>
 </form>
 {% if item %}
 <form method="post" action="{{ catalog.path }}/{{ item.id }}/delete">
   {{ csrf() }}
-  <button class="danger" {{ "disabled" if used }}>{{ icon("trash-2") }} Șterge</button>
-  {% if used %}<p class="muted small">Folosit de {{ used }} dispozitive; mută-le întâi ca să poți șterge.</p>{% endif %}
+  <button class="danger" {{ "disabled" if used }}>{{ icon("trash-2") }} {{ _("Delete") }}</button>
+  {% if used %}<p class="muted small">{{ ngettext("Used by {n} device; move it first to be able to delete.", "Used by {n} devices; move them first to be able to delete.", used) }}</p>{% endif %}
 </form>
 {% endif %}
 {% endblock %}

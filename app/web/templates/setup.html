@@ -1,14 +1,14 @@
 {% extends "auth_base.html" %}
 {% from "_macros.html" import csrf, icon with context %}
-{% block title %}Configurare · LanMon{% endblock %}
+{% block title %}{{ _("Setup") }} · LanMon{% endblock %}
 {% block content %}
 <form method="post" action="/setup" class="card narrow">
-  <h1>Bun venit în LanMon</h1>
-  <p class="muted">Creează contul de administrator. Îl vei folosi pentru a intra în aplicație.</p>
+  <h1>{{ _("Welcome to LanMon") }}</h1>
+  <p class="muted">{{ _("Create the administrator account. You will use it to sign in to the app.") }}</p>
   {{ csrf() }}
-  <label>Utilizator <input name="username" value="{{ username }}" required autocomplete="username"></label>
-  <label>Parolă <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
-  <label>Confirmă parola <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
-  <button class="primary">Creează contul</button>
+  <label>{{ _("Username") }} <input name="username" value="{{ username }}" required autocomplete="username"></label>
+  <label>{{ _("Password") }} <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+  <label>{{ _("Confirm password") }} <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
+  <button class="primary">{{ _("Create account") }}</button>
 </form>
 {% endblock %}

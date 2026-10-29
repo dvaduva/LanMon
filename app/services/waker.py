@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.db.models import ActionLog, Device
 from app.db.settings_store import get_float
 from app.events import Event, EventBus
+from app.i18n import N_
 from app.services.netinfo import NetInfo
 from app.services.pinger import ONLINE, PingMany, icmp_ping_many
 from app.services.wol import WOL_PORTS, send_magic_packet
@@ -29,7 +30,7 @@ class WakeTarget:
 
 
 class Waker:
-    """Trimite pachetul magic și verifică prin ping dacă dispozitivul a pornit."""
+    """Sends the magic packet and checks by ping whether the device came up."""
 
     def __init__(
         self,
@@ -46,24 +47,24 @@ class Waker:
         self._send = send
         self._ping_many = ping_many
         self.poll_interval = poll_interval
-        self.pending: dict[int, int] = {}  # device_id → id-ul rândului din actions_log
+        self.pending: dict[int, int] = {}  # device_id → id of its actions_log row
         self._tasks: set[asyncio.Task] = set()
 
     def close_interrupted(self) -> None:
-        """La pornire: acțiunile rămase „sent” au fost întrerupte de un restart."""
+        """On startup: actions still marked "sent" were interrupted by a restart."""
         with self._session_factory.begin() as session:
             session.execute(
                 update(ActionLog)
                 .where(ActionLog.action == "wol", ActionLog.result == SENT)
                 .values(
                     result=ERROR,
-                    detail="Întrerupt de repornirea aplicației",
+                    detail=N_("Interrupted by an app restart"),
                     finished_at=datetime.now(UTC),
                 )
             )
 
     async def wake(self, device_ids: Iterable[int], source: str = "user") -> list[int]:
-        """Pornește verificarea pentru fiecare dispozitiv; întoarce id-urile la care s-a trimis."""
+        """Starts the check for each device; returns the ids the packet was sent to."""
         targets = await asyncio.to_thread(self._load, list(device_ids))
         targets = [t for t in targets if t.id not in self.pending]
         if not targets:
@@ -74,7 +75,7 @@ class Waker:
             broadcasts = [info.broadcast, "255.255.255.255"]
             source_ip: str | None = str(info.address.ip)
         except Exception as exc:
-            log.warning("Nu am putut detecta rețeaua pentru WOL: %s", exc)
+            log.warning("Couldn't detect the network for WOL: %s", exc)
             broadcasts, source_ip = ["255.255.255.255"], None
 
         sent = []
@@ -84,7 +85,8 @@ class Waker:
                     self._send, target.mac, broadcasts, WOL_PORTS, source_ip=source_ip
                 )
             except OSError as exc:
-                await asyncio.to_thread(self._log, target, source, ERROR, str(exc), True)
+                detail = f"{N_('Sending failed')}: {exc}"
+                await asyncio.to_thread(self._log, target, source, ERROR, detail, True)
                 self._publish(target, ERROR)
                 continue
             action_id = await asyncio.to_thread(self._log, target, source, SENT, None, False)
@@ -107,7 +109,7 @@ class Waker:
         try:
             while time.monotonic() < deadline:
                 await asyncio.sleep(self.poll_interval)
-                # IP-ul și starea pot fi actualizate între timp de scaner și pinger.
+                # The IP and status may be updated meanwhile by the scanner and the pinger.
                 ip, status = await asyncio.to_thread(self._current, target.id)
                 if status == ONLINE or (ip and ip in await self._ping_many([ip])):
                     result = WOKE
@@ -116,14 +118,14 @@ class Waker:
             self.pending.pop(target.id, None)
             raise
         except Exception:
-            log.exception("Verificarea WOL a eșuat pentru %s", target.name)
+            log.exception("WOL check failed for %s", target.name)
             result = ERROR
         try:
             await asyncio.to_thread(self._finish, action_id, result)
             self._publish(target, result)
         finally:
-            # Scos din `pending` abia după ce rezultatul e în jurnal, ca UI-ul să nu vadă
-            # o trezire terminată care încă apare „trimisă”.
+            # Removed from `pending` only once the result is logged, so the UI never sees
+            # a finished wake-up that still shows as "sent".
             self.pending.pop(target.id, None)
         log.info("WOL %s: %s", target.name, result)
 

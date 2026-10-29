@@ -1,4 +1,4 @@
-"""Roluri și camere permise pentru utilizatori
+"""User roles and allowed rooms
 
 Revision ID: 0005
 Revises: 0004

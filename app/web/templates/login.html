@@ -1,12 +1,12 @@
 {% extends "auth_base.html" %}
 {% from "_macros.html" import csrf, icon with context %}
-{% block title %}Autentificare · LanMon{% endblock %}
+{% block title %}{{ _("Sign in") }} · LanMon{% endblock %}
 {% block content %}
 <form method="post" action="/login" class="card narrow">
   <h1>LanMon</h1>
   {{ csrf() }}
-  <label>Utilizator <input name="username" value="{{ username }}" required autocomplete="username" autofocus></label>
-  <label>Parolă <input type="password" name="password" required autocomplete="current-password"></label>
-  <button class="primary">Intră</button>
+  <label>{{ _("Username") }} <input name="username" value="{{ username }}" required autocomplete="username" autofocus></label>
+  <label>{{ _("Password") }} <input type="password" name="password" required autocomplete="current-password"></label>
+  <button class="primary">{{ _("Sign in") }}</button>
 </form>
 {% endblock %}

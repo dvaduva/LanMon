@@ -1,4 +1,4 @@
-"""Oprire de la distanță prin SSH
+"""Remote shutdown over SSH
 
 Revision ID: 0006
 Revises: 0005

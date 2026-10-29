@@ -6,7 +6,7 @@ ARP_COMPLETE = 0x2
 
 
 def parse_arp_table(text: str) -> dict[str, str]:
-    """Conținutul /proc/net/arp → {mac: ip}, doar intrările complete."""
+    """/proc/net/arp contents → {mac: ip}, complete entries only."""
     table: dict[str, str] = {}
     for line in text.splitlines()[1:]:
         parts = line.split()
@@ -20,7 +20,7 @@ def parse_arp_table(text: str) -> dict[str, str]:
 
 
 def read_arp_table(path: Path = Path("/proc/net/arp")) -> dict[str, str]:
-    """Tabela ARP a kernelului; cu network_mode: host e cea a QNAP-ului."""
+    """The kernel's ARP table; with network_mode: host it is the QNAP's."""
     try:
         return parse_arp_table(path.read_text())
     except OSError:

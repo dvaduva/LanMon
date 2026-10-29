@@ -1,4 +1,4 @@
-"""Notificări: marcaj pe dispozitiv și reguli implicite
+"""Notifications: per-device flag and default rules
 
 Revision ID: 0002
 Revises: 0001

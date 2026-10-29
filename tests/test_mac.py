@@ -24,5 +24,5 @@ def test_normalize_mac_invalid(raw):
 
 
 def test_random_mac_detection():
-    assert is_random_mac("da:a1:19:00:00:01")  # bitul „locally administered” setat
-    assert not is_random_mac("00:11:32:aa:bb:cc")  # OUI real (Synology)
+    assert is_random_mac("da:a1:19:00:00:01")  # "locally administered" bit set
+    assert not is_random_mac("00:11:32:aa:bb:cc")  # a real OUI (Synology)

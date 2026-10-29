@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "lanmon"
 version = "0.1.0"
-description = "Monitorizare rețea de acasă și Wake-on-LAN"
+description = "Home network monitoring and Wake-on-LAN"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -35,7 +35,7 @@ dev = [
 include = ["app*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.mako", "templates/*.html", "static/*"]
+"*" = ["*.mako", "templates/*.html", "static/*", "locales/*.json"]
 
 [tool.ruff]
 line-length = 100

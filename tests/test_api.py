@@ -55,7 +55,7 @@ def test_api_requires_valid_token(admin):
     assert admin.get("/api/v1/devices").status_code == 401
     bad = admin.get("/api/v1/devices", headers={"Authorization": "Bearer lm_gresit"})
     assert bad.status_code == 401 and bad.headers["www-authenticate"] == "Bearer"
-    # Cookie-ul de sesiune nu e suficient pentru acțiuni prin API.
+    # The session cookie isn't enough for API actions.
     assert admin.post("/api/v1/devices/1/wake").status_code == 401
 
 
@@ -81,7 +81,7 @@ def test_list_get_wake_shutdown(admin):
     waker, shutdowner = FakeWaker(), FakeShutdowner()
     admin.app.state.waker, admin.app.state.shutdowner = waker, shutdowner
     headers = {"Authorization": f"Bearer {new_token(admin)}"}
-    admin.cookies.clear()  # Home Assistant nu are sesiune
+    admin.cookies.clear()  # Home Assistant has no session
 
     devices = admin.get("/api/v1/devices", headers=headers).json()
     assert [(d["name"], d["online"], d["room"]) for d in devices] == [

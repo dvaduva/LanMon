@@ -1,4 +1,4 @@
-"""Tokenuri pentru API (Home Assistant)
+"""API tokens (Home Assistant)
 
 Revision ID: 0007
 Revises: 0006

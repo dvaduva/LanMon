@@ -3,13 +3,13 @@ import contextlib
 
 
 def parse_ports(text: str | None) -> list[int]:
-    """„3389, 22” → [22, 3389]; ValueError pentru valori invalide."""
+    """ "3389, 22" → [22, 3389]; ValueError(the bad part) for invalid values."""
     ports = set()
     for part in (text or "").replace(";", ",").replace(" ", ",").split(","):
         if not part:
             continue
         if not part.isdigit() or not 0 < int(part) < 65536:
-            raise ValueError(f"Port invalid: {part}")
+            raise ValueError(part)
         ports.add(int(part))
     return sorted(ports)
 

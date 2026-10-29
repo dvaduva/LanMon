@@ -7,16 +7,26 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import ActionLog, Device, Room, User
-from app.web.deps import Forbidden, admin_user, current_user, flash, get_db, redirect, templates
+from app.web.deps import (
+    Forbidden,
+    admin_user,
+    current_user,
+    flash,
+    get_db,
+    redirect,
+    t,
+    templates,
+    tn,
+)
 
 router = APIRouter()
 
-# Cât timp rămâne vizibil rezultatul unei porniri („Pornit” / „Nu a răspuns”).
+# How long a wake-up result ("Started" / "No response") stays visible.
 RESULT_VISIBLE_FOR = timedelta(minutes=10)
 
 
 def wol_states(request: Request, db: Session) -> dict[int, str]:
-    """device_id → waking / woke / timeout / error, pentru afișare lângă dispozitiv."""
+    """device_id → waking / woke / timeout / error, shown next to the device."""
     states: dict[int, str] = {}
     since = datetime.now(UTC) - RESULT_VISIBLE_FOR
     latest = (
@@ -34,7 +44,7 @@ def wol_states(request: Request, db: Session) -> dict[int, str]:
 
 
 def _back(request: Request, default: str) -> str:
-    """Înapoi la pagina de unde a venit cererea (doar căi locale)."""
+    """Back to the page the request came from (local paths only)."""
     referer = urlparse(request.headers.get("referer", ""))
     if referer.netloc and referer.netloc != request.url.netloc:
         return default
@@ -55,14 +65,20 @@ async def wake_device(
     if not user.can_see(device):
         raise Forbidden
     if not device.wol_enabled:
-        flash(request, f"„{device.name}” nu are Wake-on-LAN activat.", "error")
+        flash(
+            request,
+            t(request, "“{name}” doesn't have Wake-on-LAN enabled.", name=device.name),
+            "error",
+        )
     elif await request.app.state.waker.wake([device.id], source="user"):
-        flash(request, f"Am trimis pachetul de pornire către „{device.name}”.")
+        flash(request, t(request, "Sent the wake-up packet to “{name}”.", name=device.name))
     elif device.id in request.app.state.waker.pending:
-        flash(request, f"„{device.name}” se pornește deja.")
+        flash(request, t(request, "“{name}” is already starting.", name=device.name))
     else:
         flash(
-            request, f"Nu am putut trimite pachetul către „{device.name}”. Vezi Jurnalul.", "error"
+            request,
+            t(request, "Couldn't send the packet to “{name}”. See the Log.", name=device.name),
+            "error",
         )
     return redirect(request, _back(request, f"/devices/{device.id}"))
 
@@ -88,10 +104,17 @@ async def wake_room(
     if sent:
         flash(
             request,
-            f"Am trimis pachetul de pornire către {len(sent)} dispozitive din „{room.name}”.",
+            tn(
+                request,
+                "Sent the wake-up packet to {n} device in “{room}”.",
+                "Sent the wake-up packet to {n} devices in “{room}”.",
+                len(sent),
+                room=room.name,
+            ),
         )
     else:
-        flash(request, f"Niciun dispozitiv oprit cu Wake-on-LAN în „{room.name}”.", "error")
+        message = t(request, "No offline device with Wake-on-LAN in “{room}”.", room=room.name)
+        flash(request, message, "error")
     return redirect(request, "/")
 
 

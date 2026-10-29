@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 def _set_sqlite_pragmas(dbapi_connection, _record) -> None:
     cursor = dbapi_connection.cursor()
-    # WAL: scanerul scrie în timp ce interfața web citește.
+    # WAL: the scanner writes while the web UI reads.
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.execute("PRAGMA foreign_keys=ON")

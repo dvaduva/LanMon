@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Device, Discovered, User
 from app.mac import is_random_mac, normalize_mac
-from app.web.deps import admin_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, flash, get_db, redirect, t, templates
 from app.web.forms import DeviceForm, choices
 
 router = APIRouter(prefix="/unassigned")
@@ -66,7 +66,7 @@ async def add(
     if entry is None:
         return redirect(request, "/unassigned")
     form = DeviceForm.parse(await request.form())
-    error = form.validate(db)
+    error = form.validate(request, db)
     if error:
         context = {"entry": entry, "form": form, "error": error, **choices(db)}
         return templates.TemplateResponse(request, "device_add.html", context, status_code=400)
@@ -83,7 +83,10 @@ async def add(
     db.add(device)
     db.delete(entry)
     db.commit()
-    flash(request, f"„{device.name}” a fost adăugat. Starea apare după următorul ping.")
+    flash(
+        request,
+        t(request, "“{name}” was added. Its status shows after the next ping.", name=device.name),
+    )
     return redirect(request, "/unassigned")
 
 

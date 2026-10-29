@@ -10,7 +10,7 @@ def main() -> None:
     logging.basicConfig(
         level=settings.log_level.upper(), format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
-    # Un singur worker: scanerul și ping-ul sunt task-uri de fundal în același proces.
+    # A single worker: the scanner and pinger are background tasks in the same process.
     uvicorn.run(
         "app.main:create_app",
         factory=True,
@@ -19,7 +19,7 @@ def main() -> None:
         workers=1,
         log_level=settings.log_level,
         proxy_headers=True,
-        # Conexiunile SSE nu țin containerul în viață la `docker compose up -d`.
+        # Open SSE connections must not keep the container alive on `docker compose up -d`.
         timeout_graceful_shutdown=5,
     )
 

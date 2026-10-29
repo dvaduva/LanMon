@@ -39,7 +39,7 @@ def test_setup_creates_admin_and_logs_in(admin):
     with session(admin) as s:
         user = s.scalar(select(User))
     assert user.username == "admin" and user.password_hash.startswith("$argon2")
-    # Ecranul de configurare nu mai e disponibil după primul cont.
+    # The setup screen is gone after the first account.
     assert admin.get("/setup", follow_redirects=False).headers["location"] == "/login"
 
 
@@ -48,7 +48,7 @@ def test_setup_validates_password(client):
         client, "/setup", {"username": "admin", "password": "scurt", "confirm": "scurt"}
     )
     assert response.status_code == 400
-    assert "cel puțin 8" in response.text
+    assert "at least 8" in response.text
 
 
 PROTECTED = [
@@ -101,7 +101,7 @@ PROTECTED = [
 
 def test_every_page_and_action_requires_login(admin):
     admin.cookies.clear()
-    token = csrf(admin)  # sesiune nouă, neautentificată
+    token = csrf(admin)  # a new, signed-out session
     for method, url in PROTECTED:
         data = {"csrf_token": token} if method == "POST" else None
         response = admin.request(method, url, data=data, follow_redirects=False)
@@ -178,7 +178,7 @@ def test_add_device_from_unassigned(admin):
     page = admin.get("/unassigned")
     assert "nas.lan" in page.text and "Synology" in page.text
     form = admin.get("/unassigned/00:11:32:aa:bb:cc/add")
-    assert 'value="nas"' in form.text  # nume sugerat din hostname
+    assert 'value="nas"' in form.text  # name suggested from the hostname
 
     response = post(
         admin,
@@ -208,7 +208,7 @@ def test_ignore_and_restore(admin):
     post(admin, "/unassigned/aa:bb:cc:dd:ee:01/ignore", page="/unassigned")
     with session(admin) as s:
         assert s.get(Discovered, "aa:bb:cc:dd:ee:01").ignored
-    assert "Ignorate (1)" in admin.get("/unassigned").text
+    assert "Ignored (1)" in admin.get("/unassigned").text
     post(admin, "/unassigned/aa:bb:cc:dd:ee:01/restore", page="/unassigned")
     with session(admin) as s:
         assert not s.get(Discovered, "aa:bb:cc:dd:ee:01").ignored
@@ -219,14 +219,14 @@ def test_edit_device_and_history(admin):
         s.add(Device(mac="aa:bb:cc:dd:ee:02", name="PC", last_ip="192.168.1.40"))
         s.commit()
         device_id = s.scalar(select(Device.id))
-    assert "Nicio schimbare" in admin.get(f"/devices/{device_id}").text
+    assert "No status changes" in admin.get(f"/devices/{device_id}").text
 
     bad = post(admin, f"/devices/{device_id}", {"name": " "})
     assert bad.status_code == 400
-    post(admin, f"/devices/{device_id}", {"name": "PC birou", "notes": "lângă imprimantă"})
+    post(admin, f"/devices/{device_id}", {"name": "PC birou", "notes": "next to the printer"})
     with session(admin) as s:
         device = s.get(Device, device_id)
-    assert (device.name, device.notes, device.room_id) == ("PC birou", "lângă imprimantă", None)
+    assert (device.name, device.notes, device.room_id) == ("PC birou", "next to the printer", None)
 
     post(admin, f"/devices/{device_id}/delete", page=f"/devices/{device_id}")
     with session(admin) as s:
@@ -247,7 +247,7 @@ def test_room_crud_and_delete_guard(admin):
         s.commit()
     post(admin, f"/rooms/{room.id}/delete", page=f"/rooms/{room.id}")
     with session(admin) as s:
-        assert s.get(Room, room.id) is not None  # folosită: nu se șterge
+        assert s.get(Room, room.id) is not None  # in use: not deleted
         s.delete(s.scalar(select(Device)))
         s.commit()
     post(admin, f"/rooms/{room.id}/delete", page=f"/rooms/{room.id}")
@@ -332,11 +332,11 @@ def test_wake_buttons(admin):
         ids = {d.name: d.id for d in s.scalars(select(Device))}
 
     page = admin.get("/").text
-    assert "Pornește toată camera (2)" in page
-    assert len(re.findall(r'action="/devices/\d+/wake"', page)) == 2  # PC1 și PC2
+    assert "Wake the whole room (2)" in page
+    assert len(re.findall(r'action="/devices/\d+/wake"', page)) == 2  # PC1 and PC2
 
     post(admin, f"/rooms/{room_id}/wake", page="/")
-    assert fake.calls[-1] == ([ids["PC1"], ids["PC2"]], "room")  # doar WOL bifat și offline
+    assert fake.calls[-1] == ([ids["PC1"], ids["PC2"]], "room")  # only WOL-enabled and offline
 
     response = post(
         admin, f"/devices/{ids['PC1']}/wake", page="/", headers={"referer": "http://testserver/"}
@@ -345,17 +345,17 @@ def test_wake_buttons(admin):
     assert fake.calls[-1] == ([ids["PC1"]], "user")
 
     post(admin, f"/devices/{ids['TV']}/wake", page="/")
-    assert len(fake.calls) == 2  # TV nu are WOL
+    assert len(fake.calls) == 2  # the TV has no WOL
 
     fake.pending = {ids["PC1"]: 1}
-    assert "Se pornește…" in admin.get("/").text
+    assert "Starting…" in admin.get("/").text
 
     with session(admin) as s:
         s.add(ActionLog(device_id=ids["PC2"], action="wol", source="user", result="timeout"))
         s.commit()
-    assert "Nu a răspuns" in admin.get("/").text
+    assert "No response" in admin.get("/").text
     device_page = admin.get(f"/devices/{ids['PC2']}").text
     assert "Fast Startup" in device_page and "BIOS" in device_page
 
     log_page = admin.get("/log").text
-    assert "PC2" in log_page and "Nu a răspuns" in log_page
+    assert "PC2" in log_page and "No response" in log_page

@@ -7,7 +7,7 @@
 {%- endmacro %}
 
 {% macro status_dot(status) -%}
-<span class="dot dot-{{ status }}" title="{{ {'online': 'Pornit', 'offline': 'Oprit'}.get(status, 'Necunoscut') }}"></span>
+<span class="dot dot-{{ status }}" title="{{ _('Online') if status == 'online' else _('Offline') if status == 'offline' else _('Unknown') }}"></span>
 {%- endmacro %}
 
 {% macro ago(dt) -%}
@@ -26,42 +26,42 @@
 {%- endmacro %}
 
 {% macro device_fields(form, rooms, types) -%}
-<label>Nume
+<label>{{ _("Name") }}
   <input name="name" value="{{ form.name }}" required maxlength="100" autocomplete="off">
 </label>
-<label>Cameră
+<label>{{ _("Room") }}
   <select name="room_id">
-    <option value="">Fără cameră</option>
+    <option value="">{{ _("No room") }}</option>
     {% for room in rooms %}<option value="{{ room.id }}" {{ "selected" if room.id == form.room_id }}>{{ room.name }}</option>{% endfor %}
   </select>
 </label>
-<label>Tip
+<label>{{ _("Type") }}
   <select name="type_id">
     <option value="">—</option>
-    {% for t in types %}<option value="{{ t.id }}" {{ "selected" if t.id == form.type_id }}>{{ t.name }}</option>{% endfor %}
+    {% for t in types %}<option value="{{ t.id }}" {{ "selected" if t.id == form.type_id }}>{{ type_name(t) }}</option>{% endfor %}
   </select>
 </label>
 <label class="check">
   <input type="checkbox" name="wol_enabled" {{ "checked" if form.wol_enabled }}>
-  <span>Suportă Wake-on-LAN<br><small class="muted">Recomandat doar pentru dispozitive pe cablu.</small></span>
+  <span>{{ _("Supports Wake-on-LAN") }}<br><small class="muted">{{ _("Recommended only for wired devices.") }}</small></span>
 </label>
-<label>Porturi TCP verificate
-  <input name="check_ports" value="{{ form.check_ports }}" placeholder="implicit: cele ale tipului" autocomplete="off">
-  <small class="muted">Ex. 3389 pentru RDP. Gol = porturile tipului; „-” = fără verificare.</small>
+<label>{{ _("Checked TCP ports") }}
+  <input name="check_ports" value="{{ form.check_ports }}" placeholder="{{ _("default: the type's ports") }}" autocomplete="off">
+  <small class="muted">{{ _("E.g. 3389 for RDP. Empty = the type's ports; “-” = no check.") }}</small>
 </label>
 <label class="check">
   <input type="checkbox" name="notify" {{ "checked" if form.notify }}>
-  <span>Notifică-mă când e oprit<br><small class="muted">Pragul și canalele se setează în Setări → Notificări.</small></span>
+  <span>{{ _("Notify me when it's offline") }}<br><small class="muted">{{ _("The threshold and channels are set in Settings → Notifications.") }}</small></span>
 </label>
 <label class="check">
   <input type="checkbox" name="shutdown_enabled" {{ "checked" if form.shutdown_enabled }}>
-  <span>Permite oprirea de la distanță (SSH)<br><small class="muted">Cheia publică a aplicației e în Setări → Oprire de la distanță.</small></span>
+  <span>{{ _("Allow remote shutdown (SSH)") }}<br><small class="muted">{{ _("The app's public key is in Settings → Remote shutdown.") }}</small></span>
 </label>
 <div class="row-fields">
-  <label>Utilizator SSH
-    <input name="ssh_user" value="{{ form.ssh_user }}" maxlength="100" autocomplete="off" placeholder="ex. dan">
+  <label>{{ _("SSH user") }}
+    <input name="ssh_user" value="{{ form.ssh_user }}" maxlength="100" autocomplete="off" placeholder="{{ _("e.g. dan") }}">
   </label>
-  <label>Sistem de operare
+  <label>{{ _("Operating system") }}
     <select name="os">
       <option value="">—</option>
       {% for key, label in os_names.items() %}<option value="{{ key }}" {{ "selected" if key == form.os }}>{{ label }}</option>{% endfor %}
@@ -71,10 +71,10 @@
 {% if device is defined and device.ssh_host_key %}
 <label class="check">
   <input type="checkbox" name="forget_host_key">
-  <span>Uită amprenta SSH memorată<br><small class="muted">Doar dacă sistemul a fost reinstalat; se memorează din nou la următoarea oprire.</small></span>
+  <span>{{ _("Forget the remembered SSH host key") }}<br><small class="muted">{{ _("Only if the system was reinstalled; it's remembered again on the next shutdown.") }}</small></span>
 </label>
 {% endif %}
-<label>Note
+<label>{{ _("Notes") }}
   <textarea name="notes" rows="2">{{ form.notes }}</textarea>
 </label>
 {%- endmacro %}
@@ -96,35 +96,35 @@
   {% for day in days %}
   <div class="u-bar" title="{{ day.day.strftime('%d.%m') }}: {{ pct(day.percent) }}">
     <div class="u-track"><div class="u-fill {{ uptime_cell_class(day.percent) }}" style="height: {{ (day.percent or 0)|round(1) }}%"></div></div>
-    <span class="small muted">{{ ["Lu","Ma","Mi","Jo","Vi","Sâ","Du"][day.day.weekday()] }}</span>
+    <span class="small muted">{{ _(weekdays[day.day.weekday()]) }}</span>
   </div>
   {% endfor %}
 </div>
 {%- endmacro %}
 
 {% macro service_badge(device) -%}
-{%- if device.status == "online" and device.service_status == "down" -%}<span class="badge badge-error" title="Porturi închise: {{ device.closed_ports }}">Serviciu căzut</span>{%- endif -%}
+{%- if device.status == "online" and device.service_status == "down" -%}<span class="badge badge-error" title="{{ _("Closed ports: {ports}", ports=device.closed_ports) }}">{{ _("Service down") }}</span>{%- endif -%}
 {%- endmacro %}
 
 {% macro shutdown_badge(result) -%}
-{%- if result == "ok" %}<span class="badge badge-ok">Comandă trimisă</span>{% else %}<span class="badge badge-error">Eșuat</span>{% endif -%}
+{%- if result == "ok" %}<span class="badge badge-ok">{{ _("Command sent") }}</span>{% else %}<span class="badge badge-error">{{ _("Failed") }}</span>{% endif -%}
 {%- endmacro %}
 
 {% macro wol_badge(state) -%}
-{%- if state == "waking" -%}<span class="badge badge-waking">Se pornește…</span>
-{%- elif state == "woke" -%}<span class="badge badge-ok">Pornit</span>
-{%- elif state == "timeout" -%}<span class="badge badge-error">Nu a răspuns</span>
-{%- elif state == "error" -%}<span class="badge badge-error">Eroare WOL</span>
+{%- if state == "waking" -%}<span class="badge badge-waking">{{ _("Starting…") }}</span>
+{%- elif state == "woke" -%}<span class="badge badge-ok">{{ _("Started") }}</span>
+{%- elif state == "timeout" -%}<span class="badge badge-error">{{ _("No response") }}</span>
+{%- elif state == "error" -%}<span class="badge badge-error">{{ _("WOL error") }}</span>
 {%- endif -%}
 {%- endmacro %}
 
 {% macro wol_hints() -%}
 <ul class="hints">
-  <li>Wake-on-LAN activat în BIOS/UEFI (uneori „Power On by PCI-E” sau „Wake on LAN”).</li>
-  <li>Calculatorul e alimentat (priza, prelungitorul sau sursa nu sunt oprite).</li>
-  <li>„Wake on Magic Packet” activat în proprietățile plăcii de rețea, în Windows.</li>
-  <li>Fast Startup dezactivat în Windows (Opțiuni alimentare → Alegeți ce fac butoanele).</li>
-  <li>Calculatorul e conectat prin cablu; prin Wi-Fi, WOL funcționează rar.</li>
-  <li>Dacă a pornit dar apare oprit: firewall-ul Windows blochează ping-ul (regula „Echo Request – ICMPv4-In”).</li>
+  <li>{{ _("Wake-on-LAN is enabled in the BIOS/UEFI (sometimes “Power On by PCI-E” or “Wake on LAN”).") }}</li>
+  <li>{{ _("The computer has power (the socket, power strip or PSU switch is on).") }}</li>
+  <li>{{ _("“Wake on Magic Packet” is enabled in the network adapter's properties in Windows.") }}</li>
+  <li>{{ _("Fast Startup is disabled in Windows (Power Options → Choose what the power buttons do).") }}</li>
+  <li>{{ _("The computer is connected by cable; over Wi-Fi, WOL rarely works.") }}</li>
+  <li>{{ _("If it started but shows as offline: the Windows firewall blocks ping (the “Echo Request – ICMPv4-In” rule).") }}</li>
 </ul>
 {%- endmacro %}

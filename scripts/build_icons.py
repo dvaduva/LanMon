@@ -1,4 +1,4 @@
-"""Construiește app/static/icons.svg (sprite) din pachetul npm lucide-static.
+"""Builds app/static/icons.svg (sprite) from the lucide-static npm package.
 
 npm pack lucide-static@0.460.0 && tar xzf lucide-static-*.tgz
 python scripts/build_icons.py package/icons
@@ -26,7 +26,7 @@ def main(icons_dir: str) -> None:
         "<!-- Lucide icons (ISC), generat cu scripts/build_icons.py -->\n"
         '<svg xmlns="http://www.w3.org/2000/svg">\n' + "\n".join(symbols) + "\n</svg>\n"
     )
-    print(f"{len(symbols)} iconițe → {out}")
+    print(f"{len(symbols)} icons → {out}")
 
 
 if __name__ == "__main__":

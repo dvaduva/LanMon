@@ -12,9 +12,19 @@ from starlette.background import BackgroundTask
 from app.db.backup import backup_database
 from app.db.models import ApiToken, User
 from app.db.settings_store import get_int, get_str, set_value
+from app.i18n import LANGUAGES, N_
 from app.security import MIN_PASSWORD_LENGTH, hash_password, verify_password
 from app.services.notifier import load_config
-from app.web.deps import admin_user, current_user, flash, get_db, login_session, redirect, templates
+from app.web.deps import (
+    admin_user,
+    current_user,
+    flash,
+    get_db,
+    login_session,
+    redirect,
+    t,
+    templates,
+)
 
 router = APIRouter()
 
@@ -26,13 +36,13 @@ class IntSetting:
     default: int
     minimum: int
     maximum: int
-    unit: str = "secunde"
+    unit: str = N_("seconds")
 
 
 INT_SETTINGS = [
-    IntSetting("ping_interval_s", "Interval ping", 30, 10, 600),
-    IntSetting("scan_interval_s", "Interval scanare ARP", 300, 60, 86400),
-    IntSetting("wol_timeout_s", "Timeout verificare WOL", 180, 30, 900),
+    IntSetting("ping_interval_s", N_("Ping interval"), 30, 10, 600),
+    IntSetting("scan_interval_s", N_("ARP scan interval"), 300, 60, 86400),
+    IntSetting("wol_timeout_s", N_("WOL check timeout"), 180, 30, 900),
 ]
 
 
@@ -46,9 +56,9 @@ NOTIFY_FIELDS = [
     "notify_email_to",
     "notify_offline_min",
 ]
-# Câmpuri secrete: nu se afișează; gol la salvare = rămâne valoarea veche.
+# Secret fields: never shown; empty on save = keep the old value.
 NOTIFY_SECRETS = ["notify_telegram_token", "notify_email_password"]
-EMAIL_SECURITY = {"starttls": "STARTTLS (587)", "ssl": "SSL/TLS (465)", "none": "Fără criptare"}
+EMAIL_SECURITY = {"starttls": "STARTTLS (587)", "ssl": "SSL/TLS (465)", "none": N_("No encryption")}
 
 
 def _context(request: Request, db: Session, user: User, **extra) -> dict:
@@ -60,7 +70,7 @@ def _context(request: Request, db: Session, user: User, **extra) -> dict:
     return {
         "notify": notify,
         "email_security": EMAIL_SECURITY,
-        "notify_channels": load_config(db).channels,
+        "notify_channels": [t(request, c) for c in load_config(db).channels],
         "user": user,
         "int_settings": INT_SETTINGS,
         "values": values,
@@ -76,12 +86,12 @@ def _context(request: Request, db: Session, user: User, **extra) -> dict:
 
 async def render_settings(
     request: Request, db: Session, user: User, status_code: int = 200, **extra
-):
+) -> Response:
     try:
         info = await asyncio.to_thread(request.app.state.network)
         network = f"{info.interface} · {info.address} (broadcast {info.broadcast})"
     except Exception as exc:
-        network = f"nedetectată: {exc}"
+        network = t(request, "not detected: {error}", error=exc)
     context = _context(request, db, user, network=network, **extra)
     return templates.TemplateResponse(request, "settings.html", context, status_code=status_code)
 
@@ -109,10 +119,19 @@ async def save_settings(
         try:
             value = int(str(form.get(s.key, "")))
         except ValueError:
-            errors.append(f"{s.label}: introdu un număr întreg.")
+            errors.append(t(request, "{label}: enter a whole number.", label=t(request, s.label)))
             continue
         if not s.minimum <= value <= s.maximum:
-            errors.append(f"{s.label}: între {s.minimum} și {s.maximum} {s.unit}.")
+            errors.append(
+                t(
+                    request,
+                    "{label}: between {min} and {max} {unit}.",
+                    label=t(request, s.label),
+                    min=s.minimum,
+                    max=s.maximum,
+                    unit=t(request, s.unit),
+                )
+            )
         parsed[s.key] = value
 
     subnet = str(form.get("subnet", "")).strip()
@@ -120,10 +139,10 @@ async def save_settings(
         try:
             network = ipaddress.IPv4Network(subnet, strict=False)
         except ValueError:
-            errors.append("Subnet invalid. Exemplu: 192.168.1.0/24.")
+            errors.append(t(request, "Invalid subnet. Example: 192.168.1.0/24."))
         else:
             if network.prefixlen < 16:
-                errors.append("Subnetul e prea mare pentru scanare (minim /16).")
+                errors.append(t(request, "The subnet is too large to scan (at least /16)."))
             subnet = str(network)
 
     if errors:
@@ -132,7 +151,7 @@ async def save_settings(
         set_value(db, key, str(value))
     set_value(db, "subnet", subnet or None)
     db.commit()
-    flash(request, "Setările au fost salvate. Intervalele noi se aplică de la următorul ciclu.")
+    flash(request, t(request, "Settings saved. New intervals apply from the next cycle."))
     return redirect(request, "/settings")
 
 
@@ -147,14 +166,14 @@ async def save_notifications(
         not values["notify_email_port"].isdigit()
         or not 0 < int(values["notify_email_port"]) < 65536
     ):
-        errors.append("Portul SMTP trebuie să fie un număr între 1 și 65535.")
+        errors.append(t(request, "The SMTP port must be a number between 1 and 65535."))
     if values["notify_email_security"] not in EMAIL_SECURITY:
         values["notify_email_security"] = "starttls"
     offline = values["notify_offline_min"] or "10"
     if not offline.isdigit() or not 1 <= int(offline) <= 1440:
-        errors.append("Pragul pentru „oprit” trebuie să fie între 1 și 1440 de minute.")
+        errors.append(t(request, "The “offline” threshold must be between 1 and 1440 minutes."))
     if values["notify_email_host"] and "@" not in values["notify_email_to"]:
-        errors.append("Pentru email completează adresa destinatarului.")
+        errors.append(t(request, "For email, fill in the recipient's address."))
     if errors:
         return await render_settings(request, db, user, 400, error=" ".join(errors))
 
@@ -164,7 +183,7 @@ async def save_notifications(
     for key in NOTIFY_SECRETS:
         if values[key]:
             set_value(db, key, values[key])
-    # Fără chat id / server SMTP, canalul e dezactivat și secretul lui se șterge.
+    # Without a chat id / SMTP server the channel is off and its secret is cleared.
     if not values["notify_telegram_chat"]:
         set_value(db, "notify_telegram_token", None)
     if not values["notify_email_host"]:
@@ -172,7 +191,7 @@ async def save_notifications(
     set_value(db, "notify_new_device", "1" if form.get("notify_new_device") == "on" else "0")
     set_value(db, "notify_wol_failed", "1" if form.get("notify_wol_failed") == "on" else "0")
     db.commit()
-    flash(request, "Setările pentru notificări au fost salvate.")
+    flash(request, t(request, "Notification settings saved."))
     return redirect(request, "/settings")
 
 
@@ -182,13 +201,16 @@ async def test_notifications(
 ) -> Response:
     config = load_config(db)
     if not config.channels:
-        flash(request, "Nu e configurat niciun canal (Telegram sau email).", "error")
+        flash(request, t(request, "No channel is configured (Telegram or email)."), "error")
         return redirect(request, "/settings")
-    errors = await request.app.state.notify_send(config, "Mesaj de test de la LanMon.")
+    message = t(request, "Test message from LanMon.")
+    errors = await request.app.state.notify_send(config, message)
     if errors:
-        flash(request, "Mesajul de test nu a putut fi trimis. " + " ".join(errors), "error")
+        text = t(request, "The test message couldn't be sent.") + " " + " ".join(errors)
+        flash(request, text, "error")
     else:
-        flash(request, "Mesaj de test trimis pe " + " și ".join(config.channels) + ".")
+        channels = t(request, " and ").join(t(request, c) for c in config.channels)
+        flash(request, t(request, "Test message sent on {channels}.", channels=channels))
     return redirect(request, "/settings")
 
 
@@ -202,11 +224,11 @@ async def change_password(
     db: Session = Depends(get_db),
 ) -> Response:
     if not verify_password(user.password_hash, current):
-        error = "Parola actuală e greșită."
+        error = t(request, "The current password is wrong.")
     elif len(password) < MIN_PASSWORD_LENGTH:
-        error = f"Parola trebuie să aibă cel puțin {MIN_PASSWORD_LENGTH} caractere."
+        error = t(request, "The password must have at least {n} characters.", n=MIN_PASSWORD_LENGTH)
     elif password != confirm:
-        error = "Parolele nu coincid."
+        error = t(request, "The passwords don't match.")
     else:
         error = None
     if error:
@@ -214,7 +236,23 @@ async def change_password(
     user.password_hash = hash_password(password)
     db.commit()
     login_session(request, user)
-    flash(request, "Parola a fost schimbată. Celelalte sesiuni au fost deconectate.")
+    flash(request, t(request, "Password changed. Your other sessions were signed out."))
+    return redirect(request, "/settings")
+
+
+@router.post("/settings/language")
+async def change_language(
+    request: Request,
+    language: str = Form(""),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    if language in LANGUAGES:
+        user.language = language
+        db.commit()
+        request.session["lang"] = language
+        request.state.lang = language
+        flash(request, t(request, "Language saved."))
     return redirect(request, "/settings")
 
 
@@ -222,7 +260,7 @@ async def change_password(
 async def download_backup(request: Request, user: User = Depends(admin_user)) -> Response:
     settings = request.app.state.settings
     stamp = datetime.now().strftime("%Y%m%d-%H%M")
-    tmp = settings.data_dir / "backups" / f".descarcare-{stamp}.db"
+    tmp = settings.data_dir / "backups" / f".download-{stamp}.db"
     await asyncio.to_thread(backup_database, settings.db_path, tmp)
     return FileResponse(
         tmp,

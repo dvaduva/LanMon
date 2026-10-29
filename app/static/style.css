@@ -81,7 +81,7 @@ main { margin: 0; padding: 1rem clamp(1rem, 2vw, 2rem); }
 
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1rem; margin-bottom: 1rem; }
-/* Pe ecrane late, cardurile cu formulare stau unul lângă altul în loc să se întindă. */
+/* On wide screens, form cards sit side by side instead of stretching. */
 .days { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
 .days .check { margin: 0; }
 .list.plain { list-style: none; margin: 0; padding: 0; }
@@ -211,7 +211,7 @@ details.ignored li { padding: .5rem 0; border-top: 1px solid var(--border); }
 .segmented button[aria-pressed="true"] { color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
 
-/* Afișare ca tile-uri: aceleași elemente, așezate în grilă. */
+/* Tiles view: the same elements laid out in a grid. */
 [data-view="tiles"] .devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
   gap: .6rem; background: none; border: 0; }
 [data-view="tiles"] .devices li { position: relative; align-items: stretch; background: var(--surface);
@@ -224,3 +224,4 @@ details.ignored li { padding: .5rem 0; border-top: 1px solid var(--border); }
 [data-view="tiles"] .devices form { position: absolute; top: .35rem; right: .35rem; margin: 0; }
 textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; word-break: break-all; }
 .notice { border: 1px solid var(--online); border-radius: .5rem; padding: .5rem .75rem; margin-bottom: .75rem; }
+.languages { text-align: center; margin-top: 1rem; }

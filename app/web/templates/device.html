@@ -7,88 +7,88 @@
   <h1>{{ status_dot(device.status) }} {{ device.name }}</h1>
 </div>
 <p class="muted">
-  {% if device.status == "online" %}Pornit de la {{ ago(device.status_changed_at) }}
-  {% elif device.status == "offline" %}Oprit de la {{ ago(device.status_changed_at) }}
-  {% else %}Stare necunoscută (se verifică la următorul ping){% endif %}
+  {% if device.status == "online" %}{{ _("Online since") }} {{ ago(device.status_changed_at) }}
+  {% elif device.status == "offline" %}{{ _("Offline since") }} {{ ago(device.status_changed_at) }}
+  {% else %}{{ _("Unknown status (checked on the next ping)") }}{% endif %}
 </p>
 {% if device.wol_enabled or device.shutdown_enabled %}
 <section class="card wol">
   <div class="row">
     <div class="grow">
-      <strong>{{ "Wake-on-LAN" if not device.shutdown_enabled else ("Pornire și oprire" if device.wol_enabled else "Oprire de la distanță") }}</strong>
+      <strong>{{ "Wake-on-LAN" if not device.shutdown_enabled else (_("Power on and off") if device.wol_enabled else _("Remote shutdown")) }}</strong>
       {% if waking %}{{ wol_badge("waking") }}
-      {% elif device.wol_enabled and last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
-      {% if device.shutdown_enabled and last_shutdown %}<div class="muted small">Ultima oprire: {{ ago(last_shutdown.created_at) }} · {{ shutdown_badge(last_shutdown.result) }}</div>{% endif %}
-      {% if device.wol_enabled and viewer(request).is_admin %}<div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>{% endif %}
+      {% elif device.wol_enabled and last_wol %}<div class="muted small">{{ _("Last wake-up:") }} {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
+      {% if device.shutdown_enabled and last_shutdown %}<div class="muted small">{{ _("Last shutdown:") }} {{ ago(last_shutdown.created_at) }} · {{ shutdown_badge(last_shutdown.result) }}</div>{% endif %}
+      {% if device.wol_enabled and viewer(request).is_admin %}<div class="small"><a href="/schedules">{{ icon("calendar-clock") }} {{ _("Schedules") }}</a></div>{% endif %}
     </div>
     {% if device.wol_enabled and device.status != "online" and not waking %}
-    <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} Pornește</button></form>
+    <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} {{ _("Wake") }}</button></form>
     {% endif %}
     {% if device.shutdown_enabled and device.status == "online" %}
-    <form method="post" action="/devices/{{ device.id }}/shutdown" onsubmit="return confirm('Oprești „{{ device.name }}”? Programele deschise se închid fără salvare.')">{{ csrf() }}<button class="danger">{{ icon("power-off") }} Oprește</button></form>
+    <form method="post" action="/devices/{{ device.id }}/shutdown" data-confirm="{{ _("Shut down “{name}”? Open programs close without saving.", name=device.name) }}">{{ csrf() }}<button class="danger">{{ icon("power-off") }} {{ _("Shut down") }}</button></form>
     {% endif %}
   </div>
   {% if device.wol_enabled and not waking and last_wol and last_wol.result in ("timeout", "error") %}
   <details open>
-    <summary>Nu a pornit? Verifică:</summary>
-    {% if last_wol.detail %}<p class="muted small">{{ last_wol.detail }}</p>{% endif %}
+    <summary>{{ _("Didn't start? Check:") }}</summary>
+    {% if last_wol.detail %}<p class="muted small">{{ detail(last_wol.detail) }}</p>{% endif %}
     {{ wol_hints() }}
   </details>
   {% endif %}
   {% if device.shutdown_enabled and last_shutdown and last_shutdown.result == "error" and last_shutdown.detail %}
-  <p class="muted small">Oprirea a eșuat: {{ last_shutdown.detail }}</p>
+  <p class="muted small">{{ _("The shutdown failed:") }} {{ detail(last_shutdown.detail) }}</p>
   {% endif %}
 </section>
 {% endif %}
 
 <dl class="card facts">
   <dt>IP</dt><dd>{{ device.last_ip or "—" }}</dd>
-  <dt>MAC</dt><dd><code>{{ device.mac }}</code>{% if device.is_random_mac %} <span class="warn">randomizat</span>{% endif %}</dd>
-  <dt>Producător</dt><dd>{{ device.vendor or "—" }}</dd>
+  <dt>MAC</dt><dd><code>{{ device.mac }}</code>{% if device.is_random_mac %} <span class="warn">{{ _("randomized") }}</span>{% endif %}</dd>
+  <dt>{{ _("Vendor") }}</dt><dd>{{ device.vendor or "—" }}</dd>
   <dt>Hostname</dt><dd>{{ device.hostname or "—" }}</dd>
   {% if device.effective_ports %}
-  <dt>Servicii</dt><dd>porturi {{ device.effective_ports }}:
-    {% if device.status != "online" %}<span class="muted">verificate când e pornit</span>
-    {% elif device.service_status == "down" %}{{ service_badge(device) }} închise: {{ device.closed_ports }}
+  <dt>{{ _("Services") }}</dt><dd>{{ _("ports {ports}:", ports=device.effective_ports) }}
+    {% if device.status != "online" %}<span class="muted">{{ _("checked while online") }}</span>
+    {% elif device.service_status == "down" %}{{ service_badge(device) }} {{ _("closed: {ports}", ports=device.closed_ports) }}
     {% elif device.service_status == "ok" %}<span class="badge badge-ok">OK</span>
-    {% else %}<span class="muted">în curs de verificare</span>{% endif %}</dd>
+    {% else %}<span class="muted">{{ _("being checked") }}</span>{% endif %}</dd>
   {% endif %}
-  <dt>Văzut ultima dată</dt><dd>{{ ago(device.last_seen_at) }}</dd>
-  <dt>Adăugat</dt><dd>{{ ago(device.created_at) }}</dd>
+  <dt>{{ _("Last seen") }}</dt><dd>{{ ago(device.last_seen_at) }}</dd>
+  <dt>{{ _("Added") }}</dt><dd>{{ ago(device.created_at) }}</dd>
 </dl>
 </div>
 
 <div class="card-grid">
 {% if viewer(request).is_admin %}
 <form method="post" action="/devices/{{ device.id }}" class="card">
-  <h2>{{ icon("pencil") }} Editare</h2>
+  <h2>{{ icon("pencil") }} {{ _("Edit") }}</h2>
   {{ csrf() }}
   {{ device_fields(form, rooms, types) }}
-  <button class="primary">{{ icon("check") }} Salvează</button>
+  <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
 </form>
 {% endif %}
 
 <section class="card">
-  <h2>{{ icon("chart-column") }} Disponibilitate</h2>
-  <p class="small"><strong>{{ pct(uptime.percent(7)) }}</strong> <span class="muted">în ultimele 7 zile</span> · <strong>{{ pct(uptime.percent(30)) }}</strong> <span class="muted">în 30 de zile</span></p>
+  <h2>{{ icon("chart-column") }} {{ _("Uptime") }}</h2>
+  <p class="small"><strong>{{ pct(uptime.percent(7)) }}</strong> <span class="muted">{{ _("in the last 7 days") }}</span> · <strong>{{ pct(uptime.percent(30)) }}</strong> <span class="muted">{{ _("in 30 days") }}</span></p>
   {{ uptime_bars(uptime.days[-7:]) }}
-  <a class="small" href="/uptime">Toate dispozitivele</a>
+  <a class="small" href="/uptime">{{ _("All devices") }}</a>
 </section>
 
 <section class="card" id="history" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body" hx-select="#history" hx-swap="outerHTML">
-  <h2>Istoric</h2>
+  <h2>{{ _("History") }}</h2>
   {% if events %}
   <ul class="history">
-    {% for e in events %}<li>{{ status_dot(e.status) }} {{ "Pornit" if e.status == "online" else "Oprit" }} · {{ ago(e.at) }}{% if e.ip %} · {{ e.ip }}{% endif %}</li>{% endfor %}
+    {% for e in events %}<li>{{ status_dot(e.status) }} {{ _("Online") if e.status == "online" else _("Offline") }} · {{ ago(e.at) }}{% if e.ip %} · {{ e.ip }}{% endif %}</li>{% endfor %}
   </ul>
-  {% else %}<p class="muted">Nicio schimbare de stare încă.</p>{% endif %}
+  {% else %}<p class="muted">{{ _("No status changes yet.") }}</p>{% endif %}
 </section>
 </div>
 
 {% if viewer(request).is_admin %}
-<form method="post" action="/devices/{{ device.id }}/delete" onsubmit="return confirm('Ștergi „{{ device.name }}”?')">
+<form method="post" action="/devices/{{ device.id }}/delete" data-confirm="{{ _("Delete “{name}”?", name=device.name) }}">
   {{ csrf() }}
-  <button class="danger">{{ icon("trash-2") }} Șterge dispozitivul</button>
+  <button class="danger">{{ icon("trash-2") }} {{ _("Delete device") }}</button>
 </form>
 {% endif %}
 {% endblock %}

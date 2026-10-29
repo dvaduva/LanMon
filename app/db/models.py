@@ -19,7 +19,7 @@ def utcnow() -> datetime:
 
 
 class UTCDateTime(TypeDecorator):
-    """SQLite pierde fusul orar: se scrie în UTC și se citește înapoi ca datetime UTC."""
+    """SQLite drops the time zone: values are written in UTC and read back as UTC datetimes."""
 
     impl = DateTime(timezone=True)
     cache_ok = True
@@ -58,12 +58,12 @@ class DeviceType(Base):
     icon: Mapped[str | None] = mapped_column(String(50))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_builtin: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Porturi TCP verificate implicit la dispozitivele de acest tip, ex. „3389” sau „22, 443”.
+    # TCP ports checked by default on devices of this type, e.g. "3389" or "22, 443".
     check_ports: Mapped[str | None] = mapped_column(String(100))
 
 
 class Device(Base):
-    """Dispozitiv salvat de admin; cheia naturală e MAC-ul normalizat."""
+    """A device saved by an admin; the natural key is the normalized MAC."""
 
     __tablename__ = "devices"
 
@@ -81,13 +81,13 @@ class Device(Base):
     status_changed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     is_random_mac: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str | None] = mapped_column(Text)
-    # Notificare când stă oprit mai mult de pragul din Setări (și când revine).
+    # Notify when it stays offline longer than the threshold in Settings (and when it's back).
     notify: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
-    # Porturi proprii (au întâietate față de cele ale tipului); „-” = fără verificare.
+    # Own ports (take precedence over the type's); "-" = no check.
     check_ports: Mapped[str | None] = mapped_column(String(100))
     service_status: Mapped[str | None] = mapped_column(String(10))  # ok / down / None
     closed_ports: Mapped[str | None] = mapped_column(String(100))
-    # Oprire de la distanță prin SSH; ssh_host_key = amprenta memorată la prima conectare.
+    # Remote shutdown over SSH; ssh_host_key = host key remembered on first connection.
     shutdown_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     ssh_user: Mapped[str | None] = mapped_column(String(100))
     os: Mapped[str | None] = mapped_column(String(10))  # windows / linux / macos
@@ -105,7 +105,7 @@ class Device(Base):
 
 
 class Discovered(Base):
-    """Lista „Neasignate”: MAC-uri văzute la scanare și nesalvate încă."""
+    """The "Unassigned" list: MACs seen by the scanner and not saved yet."""
 
     __tablename__ = "discovered"
 
@@ -146,15 +146,15 @@ class ActionLog(Base):
 
 
 class Schedule(Base):
-    """Pornire WOL programată pentru un dispozitiv sau pentru toată camera."""
+    """A scheduled WOL wake-up for a device or a whole room."""
 
     __tablename__ = "schedules"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"))
     room_id: Mapped[int | None] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"))
-    time: Mapped[str] = mapped_column(String(5))  # HH:MM, ora locală (LANMON_TZ)
-    weekdays: Mapped[str] = mapped_column(String(7))  # cifre 0–6, luni = 0
+    time: Mapped[str] = mapped_column(String(5))  # HH:MM, local time (LANMON_TZ)
+    weekdays: Mapped[str] = mapped_column(String(7))  # digits 0–6, Monday = 0
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     last_run_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
@@ -171,14 +171,14 @@ class Setting(Base):
 
 
 class ApiToken(Base):
-    """Token pentru API-ul REST (Home Assistant); se păstrează doar hash-ul."""
+    """Token for the REST API (Home Assistant); only its hash is stored."""
 
     __tablename__ = "api_tokens"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
-    prefix: Mapped[str] = mapped_column(String(12))  # începutul tokenului, ca să-l recunoști
+    prefix: Mapped[str] = mapped_column(String(12))  # start of the token, so it can be recognized
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     last_used_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
@@ -199,8 +199,9 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    # admin: tot; member: vede și pornește doar dispozitivele din camerele permise.
+    # admin: everything; member: sees and controls only devices in their allowed rooms.
     role: Mapped[str] = mapped_column(String(10), default=ADMIN, server_default=ADMIN)
+    language: Mapped[str] = mapped_column(String(5), default="en", server_default="en")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 

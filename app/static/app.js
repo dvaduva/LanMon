@@ -1,6 +1,7 @@
-// Afișează datele (salvate în UTC) în ora locală a telefonului.
+// Shows dates (stored in UTC) in the device's local time, in the page's language.
 function localizeTimes(root) {
-  const fmt = new Intl.DateTimeFormat("ro-RO", { dateStyle: "short", timeStyle: "short" });
+  const lang = document.documentElement.lang || undefined;
+  const fmt = new Intl.DateTimeFormat(lang, { dateStyle: "short", timeStyle: "short" });
   for (const el of (root || document).querySelectorAll("time[data-local]")) {
     const d = new Date(el.getAttribute("datetime"));
     if (!isNaN(d)) el.textContent = fmt.format(d);
@@ -9,8 +10,8 @@ function localizeTimes(root) {
 document.addEventListener("DOMContentLoaded", () => localizeTimes());
 document.addEventListener("htmx:afterSwap", (e) => localizeTimes(e.target));
 
-// Camere colapsate pe Dashboard: starea se ține în browser și se reaplică după fiecare
-// reîmprospătare HTMX (fragmentul vine mereu cu toate camerele deschise).
+// Collapsed rooms on the Dashboard: kept in the browser and reapplied after every
+// HTMX refresh (the fragment always arrives with all rooms open).
 const COLLAPSED_KEY = "lanmon:collapsed-rooms";
 function collapsedRooms() {
   try {
@@ -38,7 +39,7 @@ document.addEventListener("toggle", (e) => {
   } catch {}
 }, true);
 
-// Dashboard: listă sau tile-uri, alegere ținută în browser.
+// Dashboard: list or tiles, the choice is kept in the browser.
 const VIEW_KEY = "lanmon:view";
 function applyView(view) {
   if (view === "tiles") document.documentElement.dataset.view = "tiles";
@@ -63,8 +64,14 @@ document.addEventListener("click", (e) => {
   } catch {}
 });
 
-// Actualizare live: evenimentele SSE declanșează reîmprospătarea fragmentelor HTMX
-// (elementele cu hx-trigger="lanmon:changed from:body").
+// Forms with data-confirm ask before submitting (the text is translated server-side).
+document.addEventListener("submit", (e) => {
+  const message = e.target.dataset && e.target.dataset.confirm;
+  if (message && !window.confirm(message)) e.preventDefault();
+});
+
+// Live updates: SSE events refresh the HTMX fragments
+// (elements with hx-trigger="lanmon:changed from:body").
 document.addEventListener("DOMContentLoaded", () => {
   if (!document.body.hasAttribute("data-live")) return;
   if (!window.EventSource) return;

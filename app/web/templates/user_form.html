@@ -1,37 +1,42 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, icon with context %}
-{% block title %}Utilizatori · LanMon{% endblock %}
+{% block title %}{{ _("Users") }} · LanMon{% endblock %}
 {% block content %}
-<h1>{{ item.username if item else "Utilizator nou" }}</h1>
+<h1>{{ item.username if item else _("New user") }}</h1>
 <form method="post" action="/users/{{ item.id if item else 'new' }}" class="card">
   {{ csrf() }}
-  <label>Nume de utilizator <input name="username" value="{{ values.username }}" required maxlength="100" autocomplete="off"></label>
-  <label>{{ "Parolă" if not item else "Parolă nouă" }}
+  <label>{{ _("Username") }} <input name="username" value="{{ values.username }}" required maxlength="100" autocomplete="off"></label>
+  <label>{{ _("Password") if not item else _("New password") }}
     <input type="password" name="password" minlength="8" autocomplete="new-password" {{ "required" if not item }}>
-    {% if item %}<small class="muted">Gol = rămâne parola actuală.</small>{% endif %}
+    {% if item %}<small class="muted">{{ _("Empty = keep the current password.") }}</small>{% endif %}
   </label>
   <fieldset>
-    <legend>Rol</legend>
+    <legend>{{ _("Role") }}</legend>
     {% for key, label in roles.items() %}
-    <label class="check"><input type="radio" name="role" value="{{ key }}" {{ "checked" if values.role == key }}><span>{{ label }}</span></label>
+    <label class="check"><input type="radio" name="role" value="{{ key }}" {{ "checked" if values.role == key }}><span>{{ _(label) }}</span></label>
     {% endfor %}
   </fieldset>
+  <label>{{ _("Language") }}
+    <select name="language">
+      {% for code, label in languages.items() %}<option value="{{ code }}" {{ "selected" if code == values.language }}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
   <fieldset>
-    <legend>Camere permise (pentru membri)</legend>
-    {% if not all_rooms %}<p class="muted small">Nicio cameră definită.</p>{% endif %}
+    <legend>{{ _("Allowed rooms (for members)") }}</legend>
+    {% if not all_rooms %}<p class="muted small">{{ _("No rooms defined.") }}</p>{% endif %}
     <div class="days">
       {% for r in all_rooms %}<label class="check"><input type="checkbox" name="rooms" value="{{ r.id }}" {{ "checked" if r in values.rooms }}><span>{{ r.name }}</span></label>{% endfor %}
     </div>
   </fieldset>
   <div class="actions">
-    <button class="primary">{{ icon("check") }} Salvează</button>
-    <a class="button" href="/users">Renunță</a>
+    <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
+    <a class="button" href="/users">{{ _("Cancel") }}</a>
   </div>
 </form>
 {% if item and item.id != viewer(request).id %}
-<form method="post" action="/users/{{ item.id }}/delete" onsubmit="return confirm('Ștergi utilizatorul „{{ item.username }}”?')">
+<form method="post" action="/users/{{ item.id }}/delete" data-confirm="{{ _("Delete the user “{name}”?", name=item.username) }}">
   {{ csrf() }}
-  <button class="danger">{{ icon("trash-2") }} Șterge</button>
+  <button class="danger">{{ icon("trash-2") }} {{ _("Delete") }}</button>
 </form>
 {% endif %}
 {% endblock %}

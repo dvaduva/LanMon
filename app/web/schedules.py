@@ -1,4 +1,4 @@
-"""Programări WOL: listă, adăugare, activare/dezactivare, ștergere."""
+"""WOL schedules: list, add, enable/disable, delete."""
 
 import re
 
@@ -8,22 +8,22 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Device, Room, Schedule, User
-from app.services.scheduler import WEEKDAYS
-from app.web.deps import admin_user, flash, get_db, redirect, templates
+from app.i18n import WEEKDAYS
+from app.web.deps import admin_user, flash, get_db, redirect, t, templates
 
 router = APIRouter(prefix="/schedules")
 
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
-def describe_days(weekdays: str) -> str:
+def describe_days(request: Request, weekdays: str) -> str:
     if weekdays == "0123456":
-        return "zilnic"
+        return t(request, "daily")
     if weekdays == "01234":
-        return "luni–vineri"
+        return t(request, "Monday–Friday")
     if weekdays == "56":
-        return "weekend"
-    return ", ".join(WEEKDAYS[int(d)] for d in weekdays)
+        return t(request, "weekend")
+    return ", ".join(t(request, WEEKDAYS[int(d)]) for d in weekdays)
 
 
 def _render(request: Request, db: Session, status_code: int = 200, **extra) -> Response:
@@ -35,7 +35,7 @@ def _render(request: Request, db: Session, status_code: int = 200, **extra) -> R
         "devices": devices,
         "rooms": rooms,
         "weekdays": WEEKDAYS,
-        "describe_days": describe_days,
+        "describe_days": lambda weekdays: describe_days(request, weekdays),
         "tz": request.app.state.settings.tz,
         "values": {"target": "", "time": "08:00", "days": "01234"},
         **extra,
@@ -66,17 +66,17 @@ async def create(
     elif kind == "room" and raw_id.isdigit() and db.get(Room, int(raw_id)) is not None:
         schedule.room_id = int(raw_id)
     else:
-        error = "Alege un dispozitiv sau o cameră."
+        error = t(request, "Choose a device or a room.")
     if not error and not TIME_RE.match(time):
-        error = "Ora trebuie să fie în formatul HH:MM."
+        error = t(request, "The time must be in the HH:MM format.")
     if not error and not days:
-        error = "Alege cel puțin o zi."
+        error = t(request, "Choose at least one day.")
     if error:
         values = {"target": target, "time": time, "days": days}
         return _render(request, db, 400, error=error, values=values)
     db.add(schedule)
     db.commit()
-    flash(request, "Programarea a fost adăugată.")
+    flash(request, t(request, "Schedule added."))
     return redirect(request, "/schedules")
 
 
@@ -105,5 +105,5 @@ def delete(
     if schedule is not None:
         db.delete(schedule)
         db.commit()
-        flash(request, "Programarea a fost ștearsă.")
+        flash(request, t(request, "Schedule deleted."))
     return redirect(request, "/schedules")

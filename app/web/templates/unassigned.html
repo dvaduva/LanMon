@@ -1,42 +1,42 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, icon with context %}
-{% block title %}Neasignate · LanMon{% endblock %}
+{% block title %}{{ _("Unassigned") }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>Neasignate</h1>
-    <p class="muted">Dispozitive găsite la scanare și nesalvate încă.</p>
+    <h1>{{ _("Unassigned") }}</h1>
+    <p class="muted">{{ _("Devices found by the scanner and not saved yet.") }}</p>
   </div>
-  <form method="post" action="/scan">{{ csrf() }}<button>{{ icon("radar") }} Scanează acum</button></form>
+  <form method="post" action="/scan">{{ csrf() }}<button>{{ icon("radar") }} {{ _("Scan now") }}</button></form>
 </div>
 {% if not entries %}
-<div class="card empty"><p>Nimic nou. Toate dispozitivele găsite sunt salvate sau ignorate.</p></div>
+<div class="card empty"><p>{{ _("Nothing new. Every device found is saved or ignored.") }}</p></div>
 {% endif %}
 <ul class="list">
   {% for e in entries %}
   <li class="card row">
     <div class="grow">
-      <strong>{{ e.hostname or e.vendor or "Dispozitiv necunoscut" }}</strong>
+      <strong>{{ e.hostname or e.vendor or _("Unknown device") }}</strong>
       <div class="muted small">
         {{ e.ip }} · <code>{{ e.mac }}</code>{% if e.vendor and e.hostname %} · {{ e.vendor }}{% endif %}
-        {% if is_random_mac(e.mac) %}<br><span class="warn">MAC randomizat (telefon/tabletă?): poate apărea din nou ca dispozitiv nou.</span>{% endif %}
+        {% if is_random_mac(e.mac) %}<br><span class="warn">{{ _("Randomized MAC (phone/tablet?): it may show up again as a new device.") }}</span>{% endif %}
       </div>
     </div>
     <div class="actions">
-      <a class="button primary" href="/unassigned/{{ e.mac }}/add">{{ icon("plus") }} Adaugă</a>
-      <form method="post" action="/unassigned/{{ e.mac }}/ignore">{{ csrf() }}<button title="Ignoră">{{ icon("eye-off") }}<span class="sr">Ignoră</span></button></form>
+      <a class="button primary" href="/unassigned/{{ e.mac }}/add">{{ icon("plus") }} {{ _("Add") }}</a>
+      <form method="post" action="/unassigned/{{ e.mac }}/ignore">{{ csrf() }}<button title="{{ _("Ignore") }}">{{ icon("eye-off") }}<span class="sr">{{ _("Ignore") }}</span></button></form>
     </div>
   </li>
   {% endfor %}
 </ul>
 {% if ignored %}
 <details class="ignored">
-  <summary>Ignorate ({{ ignored|length }})</summary>
+  <summary>{{ _("Ignored ({n})", n=ignored|length) }}</summary>
   <ul class="list">
     {% for e in ignored %}
     <li class="row">
-      <div class="grow small">{{ e.hostname or e.vendor or "Necunoscut" }} · {{ e.ip }} · <code>{{ e.mac }}</code></div>
-      <form method="post" action="/unassigned/{{ e.mac }}/restore">{{ csrf() }}<button>{{ icon("eye") }} Reactivează</button></form>
+      <div class="grow small">{{ e.hostname or e.vendor or _("Unknown") }} · {{ e.ip }} · <code>{{ e.mac }}</code></div>
+      <form method="post" action="/unassigned/{{ e.mac }}/restore">{{ csrf() }}<button>{{ icon("eye") }} {{ _("Restore") }}</button></form>
     </li>
     {% endfor %}
   </ul>

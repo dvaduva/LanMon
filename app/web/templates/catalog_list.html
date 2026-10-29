@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, icon with context %}
-{% block title %}{{ catalog.title }} · LanMon{% endblock %}
+{% block title %}{{ _(catalog.title) }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>{{ catalog.title }}</h1>
+  <h1>{{ _(catalog.title) }}</h1>
   <div class="actions">
-    {% for other in catalogs if other.path != catalog.path %}<a class="button" href="{{ other.path }}">{{ icon("tag" if other.path == "/types" else "house") }} {{ other.title }}</a>{% endfor %}
-    <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} Adaugă</a>
+    {% for other in catalogs if other.path != catalog.path %}<a class="button" href="{{ other.path }}">{{ icon("tag" if other.path == "/types" else "house") }} {{ _(other.title) }}</a>{% endfor %}
+    <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} {{ _("Add") }}</a>
   </div>
 </div>
-{% if not items %}<div class="card empty"><p>Nimic încă.</p></div>{% endif %}
+{% if not items %}<div class="card empty"><p>{{ _("Nothing yet.") }}</p></div>{% endif %}
 <ul class="list">
   {% for item in items %}
   <li class="card">
     <a class="row link" href="{{ catalog.path }}/{{ item.id }}">
       {{ icon(item.icon) }}
-      <span class="grow">{{ item.name }}</span>
-      <span class="muted small">{{ usage.get(item.id, 0) }} dispozitive</span>
+      <span class="grow">{{ type_name(item) }}</span>
+      <span class="muted small">{{ ngettext("{n} device", "{n} devices", usage.get(item.id, 0)) }}</span>
       {{ icon("chevron-right") }}
     </a>
   </li>

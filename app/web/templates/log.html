@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "_macros.html" import ago, csrf, icon, shutdown_badge, wol_badge, wol_hints with context %}
-{% block title %}Jurnal · LanMon{% endblock %}
+{% block title %}{{ _("Log") }} · LanMon{% endblock %}
 {% block content %}
-<h1>Jurnal</h1>
-<p class="muted">Porniri prin Wake-on-LAN, opriri de la distanță și scanări manuale, cele mai noi primele.</p>
-{% if not entries %}<div class="card empty"><p>Nicio acțiune încă.</p></div>{% endif %}
+<h1>{{ _("Log") }}</h1>
+<p class="muted">{{ _("Wake-on-LAN wake-ups, remote shutdowns and manual scans, newest first.") }}</p>
+{% if not entries %}<div class="card empty"><p>{{ _("No actions yet.") }}</p></div>{% endif %}
 <ul class="list">
   {% for e in entries %}
   <li class="card">
@@ -12,23 +12,23 @@
       {{ icon({"wol": "power", "shutdown": "power-off"}.get(e.action, "radar")) }}
       <div class="grow">
         {% if e.action in ("wol", "shutdown") %}
-        <strong>{% if e.device %}<a href="/devices/{{ e.device.id }}">{{ e.device.name }}</a>{% else %}Dispozitiv șters{% endif %}</strong>
-        <span class="muted small">· {{ "oprire · " if e.action == "shutdown" }}{{ {"room": "toată camera", "schedule": "programat", "api": "Home Assistant"}.get(e.source, "manual") }}</span>
+        <strong>{% if e.device %}<a href="/devices/{{ e.device.id }}">{{ e.device.name }}</a>{% else %}{{ _("Deleted device") }}{% endif %}</strong>
+        <span class="muted small">· {{ _("shutdown") ~ " · " if e.action == "shutdown" }}{{ {"room": _("whole room"), "schedule": _("scheduled"), "api": "Home Assistant"}.get(e.source) or _("manual") }}</span>
         {% else %}
-        <strong>Scanare manuală</strong>
+        <strong>{{ _("Manual scan") }}</strong>
         {% endif %}
-        <div class="muted small">{{ ago(e.created_at) }}{% if e.detail %} · {{ e.detail }}{% endif %}</div>
+        <div class="muted small">{{ ago(e.created_at) }}{% if e.action == "scan" and e.detail and e.detail.count("/") == 1 %}{% set counts = e.detail.split("/") %} · {{ _("{found} found, {new} new", found=counts[0], new=counts[1]) }}{% elif e.detail %} · {{ detail(e.detail) }}{% endif %}</div>
       </div>
       {% if e.action == "wol" %}
         {{ wol_badge("waking" if e.result == "sent" else e.result) }}
       {% elif e.action == "shutdown" %}
         {{ shutdown_badge(e.result) }}
       {% else %}
-        <span class="badge {{ 'badge-ok' if e.result == 'ok' else 'badge-error' }}">{{ "OK" if e.result == "ok" else "Eroare" }}</span>
+        <span class="badge {{ 'badge-ok' if e.result == 'ok' else 'badge-error' }}">{{ "OK" if e.result == "ok" else _("Error") }}</span>
       {% endif %}
     </div>
     {% if e.action == "wol" and e.result == "timeout" and loop.first %}
-    <details><summary class="small">Nu a pornit? Verifică:</summary>{{ wol_hints() }}</details>
+    <details><summary class="small">{{ _("Didn't start? Check:") }}</summary>{{ wol_hints() }}</details>
     {% endif %}
   </li>
   {% endfor %}

@@ -8,7 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import ApiToken, Device, User
-from app.web.deps import admin_user, flash, get_db, redirect
+from app.services.shutdown import describe
+from app.web.deps import admin_user, flash, get_db, redirect, t
 from app.web.settings import render_settings
 
 router = APIRouter()
@@ -21,7 +22,7 @@ def hash_token(token: str) -> str:
 
 
 def create_token(db: Session, name: str) -> str:
-    """Întoarce tokenul în clar; în baza de date rămâne doar hash-ul."""
+    """Returns the plain token; only its hash is stored in the database."""
     token = TOKEN_PREFIX + secrets.token_urlsafe(32)
     db.add(ApiToken(name=name, token_hash=hash_token(token), prefix=token[:10]))
     return token
@@ -35,7 +36,7 @@ def api_token(request: Request, db: Session = Depends(get_db)) -> ApiToken:
     if row is None:
         raise HTTPException(
             status_code=401,
-            detail="Token lipsă sau invalid.",
+            detail="Missing or invalid token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     row.last_used_at = datetime.now(UTC)
@@ -69,7 +70,7 @@ def device_json(device: Device) -> dict:
 def _device(db: Session, device_id: int) -> Device:
     device = db.get(Device, device_id)
     if device is None:
-        raise HTTPException(status_code=404, detail="Dispozitivul nu există.")
+        raise HTTPException(status_code=404, detail="No such device.")
     return device
 
 
@@ -100,12 +101,12 @@ async def wake(
     device = _device(db, device_id)
     waker = request.app.state.waker
     if not device.wol_enabled:
-        return _result(False, f"„{device.name}” nu are Wake-on-LAN activat.", 409)
+        return _result(False, f"“{device.name}” doesn't have Wake-on-LAN enabled.", 409)
     if await waker.wake([device.id], source="api"):
-        return _result(True, f"Am trimis pachetul de pornire către „{device.name}”.")
+        return _result(True, f"Sent the wake-up packet to “{device.name}”.")
     if device.id in waker.pending:
-        return _result(True, f"„{device.name}” se pornește deja.")
-    return _result(False, f"Nu am putut trimite pachetul către „{device.name}”.", 502)
+        return _result(True, f"“{device.name}” is already starting.")
+    return _result(False, f"Couldn't send the packet to “{device.name}”.", 502)
 
 
 @router.post("/api/v1/devices/{device_id}/shutdown")
@@ -117,10 +118,10 @@ async def shutdown(
 ) -> Response:
     device = _device(db, device_id)
     if not device.shutdown_enabled:
-        return _result(False, f"„{device.name}” nu are oprirea de la distanță activată.", 409)
+        return _result(False, f"“{device.name}” doesn't have remote shutdown enabled.", 409)
     db.close()
-    ok, message = await request.app.state.shutdowner.shutdown(device_id, source="api")
-    return _result(ok, message, 200 if ok else 502)
+    result = await request.app.state.shutdowner.shutdown(device_id, source="api")
+    return _result(result.ok, describe("en", result), 200 if result.ok else 502)
 
 
 def _result(ok: bool, message: str, status_code: int = 200) -> JSONResponse:
@@ -137,7 +138,7 @@ async def add_token(
     name = name.strip()[:100] or "Home Assistant"
     token = create_token(db, name)
     db.commit()
-    # Tokenul se arată o singură dată, direct în pagină (nu prin redirect/cookie).
+    # The token is shown once, right in the page (not via a redirect/cookie).
     return await render_settings(request, db, user, new_token=token, new_token_name=name)
 
 
@@ -152,5 +153,5 @@ def delete_token(
     if row is not None:
         db.delete(row)
         db.commit()
-        flash(request, f"Tokenul „{row.name}” a fost revocat.")
+        flash(request, t(request, "The token “{name}” was revoked.", name=row.name))
     return redirect(request, "/settings")

@@ -1,6 +1,6 @@
-"""Validare Faza 0: ARP, ping și WOL din container.
+"""Phase 0 validation: ARP, ping and WOL from inside the container.
 
-Rulare pe QNAP:
+Run on the QNAP:
     docker exec -it lanmon python -m app.tools.netcheck all \
         --ping 192.168.1.10 --wol aa:bb:cc:dd:ee:ff --wait-ip 192.168.1.10
 """
@@ -20,17 +20,17 @@ from app.services.wol import WOL_PORTS, send_magic_packet
 def network_from_args(args: argparse.Namespace) -> NetInfo:
     settings = get_settings()
     info = resolve_network(args.interface or settings.interface, args.subnet or settings.subnet)
-    print(f"Interfață: {info.interface}  IP: {info.address}  broadcast: {info.broadcast}")
+    print(f"Interface: {info.interface}  IP: {info.address}  broadcast: {info.broadcast}")
     return info
 
 
 def check_arp(info: NetInfo, timeout: float) -> bool:
-    print(f"\n[ARP] Scanez {info.network} ...")
+    print(f"\n[ARP] Scanning {info.network} ...")
     started = time.monotonic()
     replies = arp_scan(str(info.network), info.interface, timeout)
     for reply in replies:
         print(f"  {reply.ip:<16} {reply.mac}")
-    print(f"[ARP] {len(replies)} dispozitive în {time.monotonic() - started:.1f} s")
+    print(f"[ARP] {len(replies)} devices in {time.monotonic() - started:.1f} s")
     return bool(replies)
 
 
@@ -41,11 +41,11 @@ def check_ping(ip: str) -> bool:
     host = ping(ip, count=3, interval=0.5, timeout=1, privileged=True)
     if host.is_alive:
         print(
-            f"[PING] OK, {host.packets_received}/{host.packets_sent} răspunsuri, "
-            f"rtt mediu {host.avg_rtt:.1f} ms"
+            f"[PING] OK, {host.packets_received}/{host.packets_sent} replies, "
+            f"average rtt {host.avg_rtt:.1f} ms"
         )
     else:
-        print("[PING] Fără răspuns (la Windows verifică regula de firewall ICMPv4 Echo Request)")
+        print("[PING] No reply (on Windows, check the ICMPv4 Echo Request firewall rule)")
     return host.is_alive
 
 
@@ -53,46 +53,46 @@ def check_wol(info: NetInfo, mac: str, wait_ip: str | None, wait_s: int) -> bool
     mac = normalize_mac(mac)
     broadcasts = [info.broadcast, "255.255.255.255"]
     sent = send_magic_packet(mac, broadcasts, WOL_PORTS, source_ip=str(info.address.ip))
-    print(f"\n[WOL] {sent} pachete trimise către {mac} ({', '.join(broadcasts)}; porturi 9, 7)")
+    print(f"\n[WOL] {sent} packets sent to {mac} ({', '.join(broadcasts)}; ports 9, 7)")
     if not wait_ip:
-        print("[WOL] Verifică manual dacă PC-ul pornește (sau folosește --wait-ip).")
+        print("[WOL] Check by hand whether the PC starts (or use --wait-ip).")
         return True
 
     from icmplib import ping
 
-    print(f"[WOL] Aștept răspuns la ping de la {wait_ip}, maxim {wait_s} s ...")
+    print(f"[WOL] Waiting for a ping reply from {wait_ip}, at most {wait_s} s ...")
     deadline = time.monotonic() + wait_s
     while time.monotonic() < deadline:
         if ping(wait_ip, count=1, timeout=1, privileged=True).is_alive:
-            print("[WOL] Pornit!")
+            print("[WOL] It's up!")
             return True
         time.sleep(5)
-    print("[WOL] Nu a răspuns. Verifică WOL în BIOS/UEFI, „Wake on Magic Packet”, Fast Startup.")
+    print('[WOL] No reply. Check WOL in the BIOS/UEFI, "Wake on Magic Packet", Fast Startup.')
     return False
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="netcheck", description=__doc__)
-    parser.add_argument("--interface", help="interfața de rețea (implicit: cea a rutei implicite)")
-    parser.add_argument("--subnet", help="subnetul de scanat, ex. 192.168.1.0/24")
+    parser.add_argument("--interface", help="network interface (default: the default route's)")
+    parser.add_argument("--subnet", help="subnet to scan, e.g. 192.168.1.0/24")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_arp = sub.add_parser("arp", help="scanare ARP pe subnet")
+    p_arp = sub.add_parser("arp", help="ARP scan of the subnet")
     p_arp.add_argument("--timeout", type=float, default=3)
 
-    p_ping = sub.add_parser("ping", help="ping ICMP prin socket raw")
+    p_ping = sub.add_parser("ping", help="ICMP ping over a raw socket")
     p_ping.add_argument("ip")
 
-    p_wol = sub.add_parser("wol", help="trimite pachet magic")
+    p_wol = sub.add_parser("wol", help="send a magic packet")
     p_wol.add_argument("mac")
-    p_wol.add_argument("--wait-ip", help="IP-ul PC-ului, pentru verificare prin ping")
+    p_wol.add_argument("--wait-ip", help="the PC's IP, to check it by ping")
     p_wol.add_argument("--wait", type=int, default=180)
 
-    p_all = sub.add_parser("all", help="toate verificările")
+    p_all = sub.add_parser("all", help="all checks")
     p_all.add_argument("--timeout", type=float, default=3)
-    p_all.add_argument("--ping", dest="ping_ip", help="IP pentru testul de ping")
-    p_all.add_argument("--wol", dest="wol_mac", help="MAC pentru testul WOL")
-    p_all.add_argument("--wait-ip", help="IP-ul PC-ului trezit prin WOL")
+    p_all.add_argument("--ping", dest="ping_ip", help="IP for the ping test")
+    p_all.add_argument("--wol", dest="wol_mac", help="MAC for the WOL test")
+    p_all.add_argument("--wait-ip", help="IP of the PC woken by WOL")
     p_all.add_argument("--wait", type=int, default=180)
 
     args = parser.parse_args(argv)
@@ -114,11 +114,11 @@ def main(argv: list[str] | None = None) -> int:
     for name, check in checks:
         try:
             results[name] = check()
-        except Exception as exc:  # o verificare căzută nu le oprește pe celelalte
-            print(f"[{name}] Eroare: {type(exc).__name__}: {exc}")
+        except Exception as exc:  # one failed check doesn't stop the others
+            print(f"[{name}] Error: {type(exc).__name__}: {exc}")
             results[name] = False
 
-    print("\nRezultat: " + ", ".join(f"{k} {'OK' if v else 'EȘUAT'}" for k, v in results.items()))
+    print("\nResult: " + ", ".join(f"{k} {'OK' if v else 'FAILED'}" for k, v in results.items()))
     return 0 if all(results.values()) else 1
 
 

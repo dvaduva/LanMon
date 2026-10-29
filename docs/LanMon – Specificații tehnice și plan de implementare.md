@@ -166,7 +166,7 @@ Uvicorn rulează cu un singur worker, pentru că scanerul și ping-ul sunt task-
 
 ## Plan de implementare pe faze
 
-> **Stare (29 oct 2026):** Fazele 0–5 sunt implementate pe `main`; versiunea 1.0 e gata de release. Faza 6 (backlog-ul de după 1.0) e implementată și acoperită de teste. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
+> **Stare (29 oct 2026):** Fazele 0–5 sunt implementate pe `main`; versiunea 1.0 e gata de release. Faza 6 (backlog-ul de după 1.0) și Faza 7 (multi-limbă) sunt implementate și acoperite de teste. Criteriile care depind de rețeaua de acasă se verifică pe QNAP la final.
 
 Versiunea 1.0 se livrează în 5 faze, cu aproximativ 14–19 zile de lucru pentru un dezvoltator (estimare). Faza 0 verifică devreme cel mai mare risc: dacă ARP, ping-ul și broadcast-ul WOL funcționează din container pe QNAP. Fiecare fază se încheie cu o versiune instalată pe QNAP.
 
@@ -278,6 +278,21 @@ Criterii de acceptanță:
 - [x] Fișa dispozitivului arată disponibilitatea pe 7 și 30 de zile. *(verificat prin teste)*
 - [ ] Un PC Windows cu OpenSSH se oprește din aplicație. *(de verificat pe QNAP, la final)*
 - [ ] Home Assistant afișează starea unui PC și îl poate porni prin API. *(de verificat la final)*
+
+### Faza 7 — Multi-limbă
+
+Interfața în engleză și română, cu limba aleasă per utilizator. Codul sursă și README-ul sunt în engleză; specificația rămâne în română.
+
+- [x] Engleza e limba sursă: textele din cod și din șabloane trec prin traducere (`t()`, `_()`, `ngettext`), iar româna stă în `app/locales/ro.json` (cu forme de plural: 1, 2–19, 20+).
+- [x] Limba se alege per utilizator (Setări → Limbă; administratorul o poate seta și din Utilizatori); paginile de autentificare și configurare urmează browserul sau linkurile English · Română.
+- [x] Migrarea păstrează instalările existente în română și dă nume englezești tipurilor predefinite (traduse la afișare).
+- [x] Notificările (Telegram, email) pleacă în limba primului administrator; API-ul răspunde în engleză.
+- [x] Codul sursă (comentarii, mesaje de log, unelte) și README-ul traduse în engleză.
+
+Criterii de acceptanță:
+
+- [x] Fiecare text din interfață are traducere în română; testul eșuează dacă lipsește o traducere sau dacă una nu mai e folosită. *(verificat prin teste)*
+- [x] Doi utilizatori văd aplicația fiecare în limba lui. *(verificat prin teste)*
 
 ## Faze viitoare (backlog)
 

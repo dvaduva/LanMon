@@ -7,7 +7,7 @@ from app.services.scheduler import Scheduler
 from tests.test_web import post
 
 TZ = ZoneInfo("Europe/Bucharest")
-# Luni, 2 noiembrie 2026, ora locală
+# Monday, 2 November 2026, local time
 MONDAY_0800 = datetime(2026, 11, 2, 8, 0, tzinfo=TZ)
 
 
@@ -72,7 +72,7 @@ def test_device_schedule_fires_once_on_weekday(session_factory):
     tick(session_factory, waker, MONDAY_0800 + timedelta(minutes=1))
     assert waker.calls == [([1], "schedule")]
 
-    # A doua zi (marți) rulează din nou.
+    # The next day (Tuesday) it runs again.
     tick(session_factory, waker, MONDAY_0800 + timedelta(days=1, seconds=5))
     assert len(waker.calls) == 2
 
@@ -81,8 +81,8 @@ def test_weekend_skipped_and_missed_runs_not_replayed(session_factory):
     seed(session_factory)
     add_schedule(session_factory, device_id=1)
     waker = FakeWaker()
-    tick(session_factory, waker, MONDAY_0800 - timedelta(days=2))  # sâmbătă
-    tick(session_factory, waker, MONDAY_0800 + timedelta(minutes=30))  # prea târziu
+    tick(session_factory, waker, MONDAY_0800 - timedelta(days=2))  # Saturday
+    tick(session_factory, waker, MONDAY_0800 + timedelta(minutes=30))  # too late
     assert waker.calls == []
 
 
@@ -105,7 +105,7 @@ def test_schedules_page_crud(admin):
     )
     assert response.status_code == 303
     page = admin.get("/schedules").text
-    assert "07:30" in page and "Lu, Mi, Vi" in page
+    assert "07:30" in page and "Mon, Wed, Fri" in page
 
     bad = post(
         admin, "/schedules", {"target": "room:1", "time": "25:00", "days": "0"}, page="/schedules"
@@ -132,4 +132,4 @@ def test_scheduled_wake_shows_in_log(admin):
         s.add(d)
         s.flush()
         s.add(ActionLog(device_id=d.id, action="wol", source="schedule", result="woke"))
-    assert "programat" in admin.get("/log").text
+    assert "scheduled" in admin.get("/log").text

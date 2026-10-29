@@ -20,19 +20,19 @@ ONLINE, OFFLINE, UNKNOWN = "online", "offline", "unknown"
 PingMany = Callable[[list[str]], Awaitable[set[str]]]
 PortProbe = Callable[[str, list[int]], Awaitable[list[int]]]
 SERVICE_OK, SERVICE_DOWN = "ok", "down"
-# „Serviciu căzut” abia după atâtea cicluri consecutive cu porturi închise.
+# "Service down" only after this many consecutive cycles with closed ports.
 SERVICE_DOWN_AFTER = 2
 
 
 class StatusTracker:
-    """Anti-flapping: „offline” după N eșecuri consecutive, „online” la primul răspuns."""
+    """Anti-flapping: offline after N consecutive failures, online on the first reply."""
 
     def __init__(self, offline_after: int = 2) -> None:
         self.offline_after = offline_after
         self._failures: dict[int, int] = {}
 
     def observe(self, device_id: int, current: str, alive: bool) -> str | None:
-        """Întoarce noua stare dacă se schimbă, altfel None."""
+        """Returns the new status if it changes, else None."""
         if alive:
             self._failures[device_id] = 0
             return ONLINE if current != ONLINE else None
@@ -71,12 +71,12 @@ class Outcome:
     alive: bool
     ip: str | None
     new_status: str | None
-    # (stare serviciu, porturi închise) când se schimbă față de ce e în DB, altfel None
+    # (service status, closed ports) when it differs from the DB, else None
     service: tuple[str | None, str | None] | None = None
 
 
 class Pinger:
-    """Ping periodic pentru dispozitivele salvate; scrie schimbările de stare."""
+    """Periodic ping of the saved devices; records status changes."""
 
     def __init__(
         self,
@@ -96,7 +96,7 @@ class Pinger:
         self._arp_lookup = arp_lookup
         self._extra_arp = extra_arp
         self._tracker = tracker or StatusTracker()
-        # last_seen_at ținut în memorie; în DB doar la schimbarea stării sau o dată la 15 min.
+        # last_seen_at is kept in memory; written to the DB on status changes or every 15 min.
         self._last_seen: dict[int, datetime] = {}
         self._last_seen_written: dict[int, datetime] = {}
 
@@ -105,7 +105,7 @@ class Pinger:
             try:
                 await self.cycle()
             except Exception:
-                log.exception("Ciclul de ping a eșuat")
+                log.exception("Ping cycle failed")
             await asyncio.sleep(await asyncio.to_thread(self._interval))
 
     def _interval(self) -> int:
@@ -129,7 +129,7 @@ class Pinger:
             return targets
 
     async def _check_services(self, outcomes: list[Outcome]) -> list[Outcome]:
-        """Porturile TCP, doar pentru dispozitivele care răspund la ping."""
+        """TCP ports, only for devices that answer ping."""
         checked = [o for o in outcomes if o.alive and o.ip and o.target.ports]
         results = await asyncio.gather(
             *(self._port_probe(o.ip, list(o.target.ports)) for o in checked)
@@ -146,7 +146,7 @@ class Pinger:
                     if failures >= SERVICE_DOWN_AFTER or t.service_status == SERVICE_DOWN:
                         wanted = (SERVICE_DOWN, ", ".join(map(str, closed)))
                     else:
-                        wanted = (t.service_status, t.closed)  # încă nu e sigur
+                        wanted = (t.service_status, t.closed)  # not certain yet
                 else:
                     self._service_failures[t.id] = 0
                     wanted = (SERVICE_OK, None)
@@ -160,7 +160,7 @@ class Pinger:
 
     def _arp_table(self) -> dict[str, str]:
         table = dict(self._extra_arp() if self._extra_arp else {})
-        table.update(self._arp_lookup())  # kernelul are întâietate, e mai proaspăt
+        table.update(self._arp_lookup())  # the kernel's table wins, it's fresher
         return table
 
     async def cycle(self) -> list[Outcome]:
@@ -171,7 +171,7 @@ class Pinger:
 
         alive = await self._ping_many(sorted({t.ip for t in targets if t.ip}))
 
-        # Fără răspuns: poate DHCP a dat alt IP. Căutăm MAC-ul în tabela ARP.
+        # No reply: DHCP may have handed out another IP. Look the MAC up in the ARP table.
         failed = [t for t in targets if t.ip not in alive]
         moved: dict[int, str] = {}
         if failed:

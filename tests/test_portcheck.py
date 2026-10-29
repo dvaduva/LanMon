@@ -87,7 +87,7 @@ def test_service_down_after_two_cycles_and_recovery(session_factory):
     pinger = make(session_factory, lan, bus)
 
     asyncio.run(pinger.cycle())
-    assert device(session_factory) == (None, None)  # un singur eșec nu ajunge
+    assert device(session_factory) == (None, None)  # a single failure isn't enough
     asyncio.run(pinger.cycle())
     assert device(session_factory) == ("down", "3389")
     assert lan.probed[0] == ("192.168.1.10", [3389])
@@ -139,8 +139,8 @@ def test_service_notifications(session_factory):
     asyncio.run(notifier.handle(Event("service_status", {"device_id": 1, "service": "ok"})))
     asyncio.run(notifier.handle(Event("service_status", {"device_id": 1, "service": "ok"})))
     assert outbox.sent == [
-        "PC: serviciu căzut (porturi închise: 3389).",
-        "PC: serviciile răspund din nou.",
+        "PC: service down (closed ports: 3389).",
+        "PC: services are answering again.",
     ]
 
 
@@ -157,11 +157,11 @@ def test_ui_forms_and_badges(admin):
                 check_ports="3389",
             )
         )
-    assert "Serviciu căzut" in admin.get("/").text
-    assert "închise: 3389" in admin.get("/devices/1").text
+    assert "Service down" in admin.get("/").text
+    assert "closed: 3389" in admin.get("/devices/1").text
 
     bad = post(admin, "/devices/1", {"name": "PC", "check_ports": "rdp"}, page="/devices/1")
-    assert bad.status_code == 400 and "Port invalid" in bad.text
+    assert bad.status_code == 400 and "Invalid port" in bad.text
     post(admin, "/devices/1", {"name": "PC", "check_ports": "443 22"}, page="/devices/1")
     with sf() as s:
         assert s.get(Device, 1).check_ports == "22, 443"

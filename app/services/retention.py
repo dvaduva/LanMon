@@ -10,11 +10,11 @@ from app.db.models import ActionLog, StatusEvent
 log = logging.getLogger(__name__)
 
 RETENTION = timedelta(days=90)
-RUN_AT = (3, 30)  # ora locală (TZ din .env)
+RUN_AT = (3, 30)  # local time (TZ from .env)
 
 
 def seconds_until(now: datetime, hour: int, minute: int) -> float:
-    """Secunde până la următoarea apariție a orei hour:minute (în fusul lui `now`)."""
+    """Seconds until the next hour:minute (in the time zone of `now`)."""
     target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
     if target <= now:
         target += timedelta(days=1)
@@ -22,7 +22,7 @@ def seconds_until(now: datetime, hour: int, minute: int) -> float:
 
 
 def purge(session_factory: sessionmaker[Session], now: datetime | None = None) -> tuple[int, int]:
-    """Șterge evenimentele de stare și jurnalul mai vechi de 90 de zile."""
+    """Deletes status events and log entries older than 90 days."""
     cutoff = (now or datetime.now(UTC)) - RETENTION
     with session_factory.begin() as session:
         events = session.execute(delete(StatusEvent).where(StatusEvent.at < cutoff)).rowcount
@@ -35,6 +35,6 @@ async def run_nightly(session_factory: sessionmaker[Session]) -> None:
         await asyncio.sleep(seconds_until(datetime.now().astimezone(), *RUN_AT))
         try:
             events, actions = await asyncio.to_thread(purge, session_factory)
-            log.info("Retenție: șterse %d evenimente și %d intrări din jurnal", events, actions)
+            log.info("Retention: deleted %d status events and %d log entries", events, actions)
         except Exception:
-            log.exception("Jobul de retenție a eșuat")
+            log.exception("Retention job failed")

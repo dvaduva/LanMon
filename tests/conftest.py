@@ -29,7 +29,7 @@ def session_factory(settings):
 
 @pytest.fixture
 def admin(client):
-    """Client autentificat ca administrator (contul creat prin ecranul de configurare)."""
+    """Client signed in as administrator (the account created on the setup screen)."""
     from tests.test_web import setup_admin
 
     assert setup_admin(client).status_code == 303

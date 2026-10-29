@@ -63,12 +63,12 @@ def test_offline_and_back_online(session_factory):
     notifier = Notifier(session_factory, EventBus(), send=outbox)
 
     asyncio.run(notifier.check_offline())
-    asyncio.run(notifier.check_offline())  # o singură notificare pentru aceeași oprire
-    assert outbox.sent == ["PC birou e oprit de 15 min."]
+    asyncio.run(notifier.check_offline())  # a single notification for the same outage
+    assert outbox.sent == ["PC birou has been offline for 15 min."]
 
     set_status(session_factory, device_id, "online")
     asyncio.run(notifier.check_offline())
-    assert outbox.sent[-1] == "PC birou a revenit online."
+    assert outbox.sent[-1] == "PC birou is back online."
 
 
 def test_short_outage_and_unmarked_devices_are_quiet(session_factory):
@@ -109,8 +109,8 @@ def test_new_device_and_failed_wol(session_factory):
     asyncio.run(notifier.handle(Event("wol", {"device_id": device_id, "result": "timeout"})))
     asyncio.run(notifier.handle(Event("wol", {"device_id": device_id, "result": "woke"})))
     assert outbox.sent == [
-        "Dispozitiv nou în rețea: 11:22:33:44:55:66 (192.168.1.50, Apple)",
-        "Pornirea PC birou a eșuat: nu a răspuns în timpul de așteptare.",
+        "New device on the network: 11:22:33:44:55:66 (192.168.1.50, Apple)",
+        "Waking PC birou failed: it didn't answer within the timeout.",
     ]
 
     configure(session_factory, notify_new_device="0")
@@ -135,10 +135,10 @@ def test_run_loop_handles_events_and_periodic_checks(session_factory):
         task.cancel()
 
     asyncio.run(scenario())
-    # Ordinea depinde de ceas (pe Windows are rezoluție de ~15 ms); contează că ambele au plecat.
+    # The order depends on the clock (~15 ms resolution on Windows); what matters is both went out.
     assert sorted(outbox.sent) == [
-        "Dispozitiv nou în rețea: 11:22:33:44:55:66",
-        "PC birou e oprit de 15 min.",
+        "New device on the network: 11:22:33:44:55:66",
+        "PC birou has been offline for 15 min.",
     ]
 
 
@@ -158,17 +158,17 @@ def test_settings_page_saves_and_tests_notifications(admin):
     )
     assert response.status_code == 303
     page = admin.get("/settings").text
-    assert "Active pe Telegram" in page and "123:abc" not in page
+    assert "Active on Telegram" in page and "123:abc" not in page
 
-    # Token gol la o nouă salvare: se păstrează cel vechi.
+    # An empty token on a new save keeps the old one.
     post(admin, "/settings/notifications", {"notify_telegram_chat": "42"}, page="/settings")
     with admin.app.state.session_factory() as s:
         config = load_config(s)
     assert (config.telegram_token, config.offline_min, config.wol_failed) == ("123:abc", 10, False)
 
     post(admin, "/settings/notifications/test", page="/settings")
-    assert outbox.sent == ["Mesaj de test de la LanMon."]
-    assert "Mesaj de test trimis pe Telegram" in admin.get("/settings").text
+    assert outbox.sent == ["Test message from LanMon."]
+    assert "Test message sent on Telegram" in admin.get("/settings").text
 
     outbox.errors = ["Telegram: Unauthorized"]
     post(admin, "/settings/notifications/test", page="/settings")
@@ -183,7 +183,7 @@ def test_settings_rejects_bad_email_config(admin):
         page="/settings",
     )
     assert response.status_code == 400
-    assert "Portul SMTP" in response.text and "destinatarului" in response.text
+    assert "SMTP port" in response.text and "recipient" in response.text
 
 
 def test_device_notify_checkbox(admin):

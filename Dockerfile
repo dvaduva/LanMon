@@ -17,6 +17,6 @@ WORKDIR /data
 VOLUME /data
 EXPOSE 8765
 
-# Rulează ca root în container, dar compose renunță la toate capabilitățile în afară de NET_RAW
-# (necesar pentru ARP și ping prin socket raw).
+# Runs as root in the container, but compose drops every capability except NET_RAW
+# (needed for ARP and ping over raw sockets).
 CMD ["python", "-m", "app"]

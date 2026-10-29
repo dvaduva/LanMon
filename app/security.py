@@ -37,7 +37,7 @@ class _Attempts:
 
 
 class LoginLimiter:
-    """După `max_failures` încercări eșuate, adresa e blocată `lockout_s` secunde."""
+    """After `max_failures` failed attempts, the address is locked out for `lockout_s` seconds."""
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class LoginLimiter:
         self._attempts: dict[str, _Attempts] = {}
 
     def locked_for(self, key: str) -> float:
-        """Secunde rămase din blocare (0 dacă nu e blocat)."""
+        """Seconds left in the lockout (0 if not locked)."""
         attempts = self._attempts.get(key)
         if attempts is None:
             return 0.0

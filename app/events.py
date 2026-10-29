@@ -12,7 +12,7 @@ class Event:
 
 
 class EventBus:
-    """Bus intern: serviciile publică, conexiunile SSE se abonează."""
+    """In-process bus: services publish, SSE connections subscribe."""
 
     def __init__(self, max_queue: int = 100) -> None:
         self._subscribers: set[asyncio.Queue[Event]] = set()
@@ -31,6 +31,6 @@ class EventBus:
             try:
                 queue.put_nowait(event)
             except asyncio.QueueFull:
-                # Un client lent nu blochează restul; pierde cel mai vechi eveniment.
+                # A slow client doesn't block the others; it loses its oldest event.
                 queue.get_nowait()
                 queue.put_nowait(event)

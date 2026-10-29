@@ -11,8 +11,7 @@ from app.db.models import Device, Schedule
 
 log = logging.getLogger(__name__)
 
-WEEKDAYS = ["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"]
-# O programare ratată (aplicația era oprită) mai pornește doar dacă au trecut cel mult 10 minute.
+# A missed schedule (the app was down) still runs only if at most 10 minutes have passed.
 GRACE = timedelta(minutes=10)
 CHECK_EVERY_S = 20
 
@@ -24,7 +23,7 @@ class Due:
 
 
 def due_at(schedule: Schedule, now_local: datetime) -> datetime | None:
-    """Momentul (local) de azi la care trebuia să ruleze programarea, dacă azi e o zi a ei."""
+    """Today's (local) time the schedule was due, if today is one of its days."""
     if str(now_local.weekday()) not in schedule.weekdays:
         return None
     hour, minute = (int(x) for x in schedule.time.split(":"))
@@ -32,7 +31,7 @@ def due_at(schedule: Schedule, now_local: datetime) -> datetime | None:
 
 
 class Scheduler:
-    """Verifică periodic programările și trimite pachetele WOL prin Waker."""
+    """Checks the schedules periodically and sends the WOL packets through the Waker."""
 
     def __init__(self, session_factory: sessionmaker[Session], waker, tz: str) -> None:
         self._session_factory = session_factory
@@ -44,7 +43,7 @@ class Scheduler:
             try:
                 await self.tick()
             except Exception:
-                log.exception("Programările WOL au eșuat")
+                log.exception("WOL schedules failed")
             await asyncio.sleep(CHECK_EVERY_S)
 
     async def tick(self, now: datetime | None = None) -> list[Due]:
@@ -64,7 +63,7 @@ class Scheduler:
                 if at is None or not at <= now_local < at + GRACE:
                     continue
                 if schedule.last_run_at and schedule.last_run_at >= at:
-                    continue  # a rulat deja azi
+                    continue  # already ran today
                 schedule.last_run_at = now
                 due.append(Due(schedule.id, self._targets(session, schedule)))
         return due

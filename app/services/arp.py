@@ -1,20 +1,21 @@
 import ipaddress
 from dataclasses import dataclass
 
+from app.i18n import N_
 from app.mac import normalize_mac
 
 
 class ArpUnavailable(RuntimeError):
-    """Sistemul nu permite trimiterea de pachete ARP (lipsește Npcap sau drepturile necesare)."""
+    """The system can't send ARP packets (Npcap or the needed privileges are missing)."""
 
 
-NO_PCAP = (
-    "Scanarea ARP nu e disponibilă: pe Windows trebuie instalat Npcap (npcap.com), "
-    "cu opțiunea „WinPcap API-compatible mode”."
+NO_PCAP = N_(
+    "ARP scanning isn't available: on Windows, install Npcap (npcap.com) "
+    "with the “WinPcap API-compatible mode” option."
 )
-NO_PERMISSION = (
-    "Scanarea ARP nu are drepturi pentru socket raw: rulează ca Administrator "
-    "(Windows) sau cu capabilitatea NET_RAW (container)."
+NO_PERMISSION = N_(
+    "ARP scanning has no permission for raw sockets: run as Administrator "
+    "(Windows) or with the NET_RAW capability (container)."
 )
 
 
@@ -25,10 +26,10 @@ class ArpReply:
 
 
 def arp_scan(network: str, interface: str | None = None, timeout: float = 3) -> list[ArpReply]:
-    """Cerere ARP broadcast către tot subnetul; necesită NET_RAW.
+    """Broadcast ARP request to the whole subnet; needs NET_RAW.
 
-    Se folosește srp fără filtru BPF (scapy potrivește singur răspunsurile), deci nu e nevoie
-    de libpcap în imagine.
+    Uses srp without a BPF filter (scapy matches the replies itself), so libpcap isn't
+    needed in the image.
     """
     from scapy.layers.l2 import ARP, Ether
     from scapy.sendrecv import srp

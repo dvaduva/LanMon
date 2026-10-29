@@ -18,7 +18,7 @@ from tests.test_web import PASSWORD, post
 
 def test_settings_save_and_validate(admin):
     page = admin.get("/settings").text
-    assert "Rețea detectată" in page and 'value="30"' in page
+    assert "Detected network" in page and 'value="30"' in page
 
     bad = post(
         admin,
@@ -30,7 +30,7 @@ def test_settings_save_and_validate(admin):
             "subnet": "nu-e-subnet",
         },
     )
-    assert bad.status_code == 400 and "Subnet invalid" in bad.text and "Interval ping" in bad.text
+    assert bad.status_code == 400 and "Invalid subnet" in bad.text and "Ping interval" in bad.text
 
     ok = post(
         admin,
@@ -81,7 +81,7 @@ def test_restore_backup_on_fresh_install(admin, tmp_path):
         s.commit()
     backup = admin.get("/settings/backup").content
 
-    # Instalare nouă: backup-ul pus ca /data/lanmon.db, altă cheie de sesiune.
+    # A fresh install: the backup copied to /data/lanmon.db, another session key.
     fresh = tmp_path / "fresh"
     fresh.mkdir()
     (fresh / "lanmon.db").write_bytes(backup)
@@ -94,13 +94,13 @@ def test_restore_backup_on_fresh_install(admin, tmp_path):
 
 def test_backup_before_migration(session_factory, settings):
     backups = settings.data_dir / "backups"
-    # Baza e la zi: nu se face backup.
+    # The database is up to date: no backup.
     assert backup_before_migration(settings.db_path, settings.database_url, backups) is None
-    # O bază la o revizie mai veche primește backup înainte de migrare.
+    # A database at an older revision gets a backup before migrating.
     with session_factory.begin() as s:
         s.execute(text("update alembic_version set version_num = 'veche'"))
     dest = backup_before_migration(settings.db_path, settings.database_url, backups)
-    assert dest is not None and dest.name.startswith("pre-migrare-veche-")
+    assert dest is not None and dest.name.startswith("pre-migration-veche-")
     with sqlite3.connect(dest) as conn:
         assert conn.execute("select count(*) from device_types").fetchone()[0] == 10
 
@@ -152,7 +152,7 @@ def test_event_stream_forwards_live_events():
     async def collect():
         stream = event_stream(FakeRequest(), heartbeat_s=0.05)
         chunks = [await anext(stream)]
-        bus.publish(Event("internal", {}))  # neinteresant pentru browser
+        bus.publish(Event("internal", {}))  # not interesting for the browser
         bus.publish(Event("device_status", {"device_id": 1, "status": "online"}))
         async for chunk in stream:
             chunks.append(chunk)
@@ -162,7 +162,7 @@ def test_event_stream_forwards_live_events():
     assert chunks[0].startswith("retry:")
     assert 'event: device_status\ndata: {"device_id": 1, "status": "online"}\n\n' in chunks
     assert not any("internal" in c for c in chunks)
-    assert not bus._subscribers  # abonamentul se închide la deconectare
+    assert not bus._subscribers  # the subscription closes on disconnect
 
 
 def test_events_endpoint_requires_login(client):

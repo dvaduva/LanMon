@@ -21,15 +21,15 @@ def _ltoa(value: int) -> str:
 
 
 def pick_network(routes: list[tuple], interface: str | None = None) -> NetInfo:
-    """Alege interfața și subnetul LAN din tabela de rute scapy.
+    """Picks the LAN interface and subnet from scapy's routing table.
 
-    Fiecare rută: (net, mask, gateway, iface, addr, metric). Fără `interface`, se folosește
-    interfața rutei implicite.
+    Each route: (net, mask, gateway, iface, addr, metric). Without `interface`, the default
+    route's interface is used.
     """
     if interface is None:
         defaults = [r for r in routes if r[0] == 0 and r[1] == 0]
         if not defaults:
-            raise RuntimeError("Nu am găsit ruta implicită; setează LANMON_INTERFACE.")
+            raise RuntimeError("No default route found; set LANMON_INTERFACE.")
         interface = min(defaults, key=lambda r: r[5])[3]
 
     for net, mask, gateway, iface, addr, _metric in routes:
@@ -40,13 +40,11 @@ def pick_network(routes: list[tuple], interface: str | None = None) -> NetInfo:
         address = ipaddress.IPv4Interface(f"{addr}/{_ltoa(mask)}")
         if address.network.network_address == ipaddress.IPv4Address(net):
             return NetInfo(interface=interface, address=address)
-    raise RuntimeError(
-        f"Nu am găsit subnetul pentru interfața {interface!r}; setează LANMON_SUBNET."
-    )
+    raise RuntimeError(f"No subnet found for interface {interface!r}; set LANMON_SUBNET.")
 
 
 def detect_network(interface: str | None = None) -> NetInfo:
-    import scapy.route  # noqa: F401  (populează conf.route)
+    import scapy.route  # noqa: F401  (populates conf.route)
     from scapy.config import conf
 
     routes = [
@@ -57,7 +55,7 @@ def detect_network(interface: str | None = None) -> NetInfo:
 
 
 def resolve_network(interface: str | None = None, subnet: str | None = None) -> NetInfo:
-    """Interfața din rute (sau cea dată); subnetul dat suprascrie masca detectată."""
+    """The interface from the routes (or the given one); a given subnet overrides the mask."""
     info = detect_network(interface)
     if subnet:
         prefix = ipaddress.IPv4Network(subnet, strict=False).prefixlen

@@ -1,4 +1,4 @@
-"""Iconițele Lucide disponibile în aplicație (sprite: app/static/icons.svg)."""
+"""Lucide icons available in the app (sprite: app/static/icons.svg)."""
 
 ROOM_ICONS = [
     "house",
@@ -61,6 +61,7 @@ UI_ICONS = [
     "trash-2",
     "power",
     "power-off",
+    "languages",
     "refresh-cw",
     "radar",
     "eye",

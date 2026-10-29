@@ -10,8 +10,8 @@ from app.services.pinger import OFFLINE, ONLINE, UNKNOWN, Pinger, StatusTracker
 def test_tracker_anti_flapping():
     t = StatusTracker(offline_after=2)
     assert t.observe(1, UNKNOWN, True) == ONLINE
-    assert t.observe(1, ONLINE, False) is None  # primul eșec nu contează
-    assert t.observe(1, ONLINE, True) is None  # răspunsul resetează contorul
+    assert t.observe(1, ONLINE, False) is None  # the first failure doesn't count
+    assert t.observe(1, ONLINE, True) is None  # a reply resets the counter
     assert t.observe(1, ONLINE, False) is None
     assert t.observe(1, ONLINE, False) == OFFLINE
     assert t.observe(1, OFFLINE, False) is None
@@ -55,8 +55,8 @@ def test_status_transitions_write_events(session_factory):
 
     asyncio.run(pinger.cycle())  # unknown → online
     net.alive.clear()
-    asyncio.run(pinger.cycle())  # un eșec: rămâne online
-    asyncio.run(pinger.cycle())  # două eșecuri: offline
+    asyncio.run(pinger.cycle())  # one failure: stays online
+    asyncio.run(pinger.cycle())  # two failures: offline
 
     with session_factory() as s:
         device = s.get(Device, device_id)

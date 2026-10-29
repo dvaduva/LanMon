@@ -1,8 +1,7 @@
 {
   "name": "LanMon",
   "short_name": "LanMon",
-  "description": "Dispozitivele din rețeaua de acasă și pornirea lor prin Wake-on-LAN",
-  "lang": "ro",
+  "description": "Home network devices and Wake-on-LAN",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

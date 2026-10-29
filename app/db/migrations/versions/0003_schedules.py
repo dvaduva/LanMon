@@ -1,4 +1,4 @@
-"""Programări WOL
+"""WOL schedules
 
 Revision ID: 0003
 Revises: 0002

@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from app.db.models import ActionLog, Device, Discovered
 from app.events import EventBus
-from app.services.arp import ArpReply
+from app.services.arp import NO_PCAP, ArpReply
 from app.services.netinfo import NetInfo
 from app.services.scanner import Scanner
 
@@ -82,7 +82,7 @@ def test_last_seen_written_at_most_every_15_minutes(session_factory):
     asyncio.run(scanner.scan_once())
     with session_factory() as s:
         assert s.get(Discovered, "aa:bb:cc:dd:ee:02").last_seen_at > old
-    assert calls["resolve"] == ["192.168.1.60"]  # reverse DNS doar prima dată
+    assert calls["resolve"] == ["192.168.1.60"]  # reverse DNS only the first time
 
 
 def test_manual_scan_is_logged(session_factory):
@@ -93,7 +93,7 @@ def test_manual_scan_is_logged(session_factory):
     with session_factory() as s:
         entry = s.scalar(select(ActionLog))
     assert (entry.action, entry.source, entry.result) == ("scan", "user", "ok")
-    assert entry.detail == "1 dispozitive, 1 noi"
+    assert entry.detail == "1/1"
 
 
 def test_missing_npcap_is_reported_once_without_traceback(session_factory, caplog, monkeypatch):
@@ -112,7 +112,7 @@ def test_missing_npcap_is_reported_once_without_traceback(session_factory, caplo
     except ArpUnavailable as exc:
         assert str(exc) == NO_PCAP
     else:
-        raise AssertionError("ArpUnavailable așteptat")
+        raise AssertionError("expected ArpUnavailable")
 
     def arp(network, iface, timeout):
         raise ArpUnavailable(NO_PCAP)
@@ -135,8 +135,8 @@ def test_missing_npcap_is_reported_once_without_traceback(session_factory, caplo
 
 
 def test_dashboard_shows_scan_error(admin):
-    admin.app.state.scanner.last_error = "Scanarea ARP nu e disponibilă"
-    assert "Scanarea ARP nu e disponibilă" in admin.get("/").text
+    admin.app.state.scanner.last_error = NO_PCAP
+    assert "install Npcap" in admin.get("/").text
 
 
 def test_dashboard_rooms_are_collapsible(admin):

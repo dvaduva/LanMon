@@ -12,9 +12,10 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.db.models import Device, Discovered
+from app.db.models import ADMIN, Device, Discovered, User
 from app.db.settings_store import get_int, get_str
 from app.events import Event, EventBus
+from app.i18n import DEFAULT_LANGUAGE, N_, gettext
 
 log = logging.getLogger(__name__)
 
@@ -40,14 +41,16 @@ class NotifyConfig:
     offline_min: int
     new_device: bool
     wol_failed: bool
+    # Notifications go out in the language of the first administrator.
+    language: str = DEFAULT_LANGUAGE
 
     @property
     def channels(self) -> list[str]:
         names = []
         if self.telegram_token and self.telegram_chat:
-            names.append("Telegram")
+            names.append(N_("Telegram"))
         if self.email:
-            names.append("email")
+            names.append(N_("email"))
         return names
 
 
@@ -72,6 +75,10 @@ def load_config(session: Session) -> NotifyConfig:
         offline_min=get_int(session, "notify_offline_min", 10),
         new_device=get_str(session, "notify_new_device") == "1",
         wol_failed=get_str(session, "notify_wol_failed") == "1",
+        language=session.scalar(
+            select(User.language).where(User.role == ADMIN).order_by(User.id).limit(1)
+        )
+        or DEFAULT_LANGUAGE,
     )
 
 
@@ -112,7 +119,7 @@ Sender = Callable[[NotifyConfig, str], Awaitable[list[str]]]
 
 
 async def deliver(config: NotifyConfig, text: str) -> list[str]:
-    """Trimite pe toate canalele configurate; întoarce erorile (gol = totul a mers)."""
+    """Sends on every configured channel; returns the errors (empty = all went fine)."""
     errors = []
     if config.telegram_token and config.telegram_chat:
         try:
@@ -137,7 +144,7 @@ def _minutes(delta: timedelta) -> str:
 
 
 class Notifier:
-    """Ascultă evenimentele și trimite notificări după regulile din Setări."""
+    """Listens to events and sends notifications according to the rules in Settings."""
 
     def __init__(
         self,
@@ -150,12 +157,12 @@ class Notifier:
         self._events = events
         self._send = send
         self._check_every = check_every
-        # Dispozitive pentru care s-a trimis „oprit”; la revenire se trimite „a revenit”.
+        # Devices an "offline" alert went out for; their return triggers a "back online" alert.
         self.offline_notified: set[int] = set()
         self.service_down_notified: set[int] = set()
 
     def prime(self) -> None:
-        """La pornire nu se notifică din nou dispozitivele deja oprite."""
+        """On startup, devices that are already offline are not notified again."""
         with self._session_factory() as session:
             ids = session.scalars(
                 select(Device.id).where(Device.notify, Device.status == "offline")
@@ -183,14 +190,14 @@ class Notifier:
         try:
             await coro
         except Exception:
-            log.exception("Notificarea a eșuat")
+            log.exception("Notification failed")
 
     async def _notify(self, config: NotifyConfig, text: str) -> None:
         if not config.channels:
             return
         errors = await self._send(config, text)
         for error in errors:
-            log.warning("Notificare netrimisă: %s", error)
+            log.warning("Notification not sent: %s", error)
 
     async def handle(self, event: Event) -> None:
         if event.kind == "device_discovered":
@@ -215,7 +222,9 @@ class Notifier:
         mac, ip, vendor, hostname = row
         details = ", ".join(x for x in (ip, vendor, hostname) if x)
         await self._notify(
-            config, f"Dispozitiv nou în rețea: {mac}" + (f" ({details})" if details else "")
+            config,
+            gettext(config.language, "New device on the network: {mac}", mac=mac)
+            + (f" ({details})" if details else ""),
         )
 
     async def _wol_failed(self, device_id: int, result: str) -> None:
@@ -228,9 +237,13 @@ class Notifier:
         if not config.wol_failed or name is None:
             return
         reason = (
-            "nu a răspuns în timpul de așteptare" if result == "timeout" else "eroare la trimitere"
+            N_("it didn't answer within the timeout")
+            if result == "timeout"
+            else N_("the packet couldn't be sent")
         )
-        await self._notify(config, f"Pornirea {name} a eșuat: {reason}.")
+        reason = gettext(config.language, reason)
+        text = gettext(config.language, "Waking {name} failed: {reason}.", name=name, reason=reason)
+        await self._notify(config, text)
 
     async def _service(self, device_id: int, service: str, data: dict) -> None:
         def load():
@@ -245,12 +258,20 @@ class Notifier:
             return
         if service == "down":
             await self._notify(
-                config, f"{name}: serviciu căzut (porturi închise: {data['closed']})."
+                config,
+                gettext(
+                    config.language,
+                    "{name}: service down (closed ports: {ports}).",
+                    name=name,
+                    ports=data["closed"],
+                ),
             )
             self.service_down_notified.add(device_id)
         elif device_id in self.service_down_notified:
             self.service_down_notified.discard(device_id)
-            await self._notify(config, f"{name}: serviciile răspund din nou.")
+            await self._notify(
+                config, gettext(config.language, "{name}: services are answering again.", name=name)
+            )
 
     async def check_offline(self, now: datetime | None = None) -> None:
         now = now or datetime.now(UTC)
@@ -271,9 +292,17 @@ class Notifier:
             if status == "offline" and device_id not in self.offline_notified:
                 if changed_at and now - changed_at >= threshold:
                     self.offline_notified.add(device_id)
-                    await self._notify(config, f"{name} e oprit de {_minutes(now - changed_at)}.")
+                    text = gettext(
+                        config.language,
+                        "{name} has been offline for {duration}.",
+                        name=name,
+                        duration=_minutes(now - changed_at),
+                    )
+                    await self._notify(config, text)
             elif status == "online" and device_id in self.offline_notified:
                 self.offline_notified.discard(device_id)
-                await self._notify(config, f"{name} a revenit online.")
-        # Dispozitivele care nu mai au notificări (sau au fost șterse) ies din evidență.
+                await self._notify(
+                    config, gettext(config.language, "{name} is back online.", name=name)
+                )
+        # Devices without notifications (or deleted ones) drop out of the tracking.
         self.offline_notified &= {row[0] for row in rows}

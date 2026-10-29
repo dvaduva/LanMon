@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icon with context %}
-{% block title %}Utilizatori · LanMon{% endblock %}
+{% block title %}{{ _("Users") }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>Utilizatori</h1>
-  <a class="button primary" href="/users/new">{{ icon("plus") }} Adaugă</a>
+  <h1>{{ _("Users") }}</h1>
+  <a class="button primary" href="/users/new">{{ icon("plus") }} {{ _("Add") }}</a>
 </div>
-<p class="muted">Administratorii văd și modifică tot. Membrii văd și pornesc doar dispozitivele din camerele permise; nu au acces la Neasignate, Camere, Jurnal sau Setări (în afară de parola lor).</p>
+<p class="muted">{{ _("Administrators see and change everything. Members see and control only the devices in their allowed rooms; they can't open Unassigned, Rooms, Log or Settings (except for their own password and language).") }}</p>
 <ul class="list">
   {% for u in users %}
   <li class="card">
     <a class="row link" href="/users/{{ u.id }}">
       {{ icon("shield-check" if u.is_admin else "user") }}
       <span class="grow"><strong>{{ u.username }}</strong>
-        <span class="muted small">· {{ roles[u.role] }}{% if not u.is_admin %} · {{ u.rooms|map(attribute="name")|join(", ") or "nicio cameră" }}{% endif %}</span></span>
+        <span class="muted small">· {{ _(roles[u.role]) }} · {{ languages[u.language] }}{% if not u.is_admin %} · {{ u.rooms|map(attribute="name")|join(", ") or _("no rooms") }}{% endif %}</span></span>
       {{ icon("chevron-right") }}
     </a>
   </li>

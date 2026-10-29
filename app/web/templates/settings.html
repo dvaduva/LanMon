@@ -1,115 +1,126 @@
 {% extends "base.html" %}
 {% from "_macros.html" import ago, csrf, icon with context %}
-{% block title %}Setări · LanMon{% endblock %}
+{% block title %}{{ _("Settings") }} · LanMon{% endblock %}
 {% block content %}
-<h1>Setări</h1>
+<h1>{{ _("Settings") }}</h1>
 
 <div class="card-grid">
 {% if user.is_admin %}
 <form method="post" action="/settings" class="card">
-  <h2>{{ icon("radar") }} Rețea și intervale</h2>
+  <h2>{{ icon("radar") }} {{ _("Network and intervals") }}</h2>
   {{ csrf() }}
-  <p class="muted small">Rețea detectată: {{ network }}</p>
-  <label>Subnet de scanat
-    <input name="subnet" value="{{ subnet }}" placeholder="{{ env_subnet or 'automat, ex. 192.168.1.0/24' }}" autocomplete="off">
-    <small class="muted">Gol = {{ "LANMON_SUBNET (" ~ env_subnet ~ ")" if env_subnet else "detectare automată" }}.</small>
+  <p class="muted small">{{ _("Detected network:") }} {{ network }}</p>
+  <label>{{ _("Subnet to scan") }}
+    <input name="subnet" value="{{ subnet }}" placeholder="{{ env_subnet or _("automatic, e.g. 192.168.1.0/24") }}" autocomplete="off">
+    <small class="muted">{{ _("Empty = {fallback}.", fallback="LANMON_SUBNET (" ~ env_subnet ~ ")" if env_subnet else _("automatic detection")) }}</small>
   </label>
   {% for s in int_settings %}
-  <label>{{ s.label }} ({{ s.unit }})
+  <label>{{ _(s.label) }} ({{ _(s.unit) }})
     <input type="number" name="{{ s.key }}" value="{{ values[s.key] }}" min="{{ s.minimum }}" max="{{ s.maximum }}" step="1" required>
   </label>
   {% endfor %}
-  <button class="primary">{{ icon("check") }} Salvează</button>
+  <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
 </form>
 
 <section class="card">
-  <h2>{{ icon("bell") }} Notificări</h2>
-  <p class="muted small">{% if notify_channels %}Active pe {{ notify_channels|join(" și ") }}.{% else %}Niciun canal configurat încă.{% endif %}
-    Dispozitivele pentru care primești „oprit” se aleg din fișa fiecăruia.</p>
+  <h2>{{ icon("bell") }} {{ _("Notifications") }}</h2>
+  <p class="muted small">{% if notify_channels %}{{ _("Active on {channels}.", channels=notify_channels|join(_(" and "))) }}{% else %}{{ _("No channel configured yet.") }}{% endif %}
+    {{ _("You choose which devices send “offline” alerts on each device's page.") }}</p>
   <form method="post" action="/settings/notifications">
     {{ csrf() }}
     <fieldset>
       <legend>Telegram</legend>
-      <label>Token bot
-        <input type="password" name="notify_telegram_token" autocomplete="off" placeholder="{{ 'neschimbat' if notify.notify_telegram_token else '123456:ABC…' }}">
-        <small class="muted">De la @BotFather. Gol = rămâne cel salvat.</small>
+      <label>{{ _("Bot token") }}
+        <input type="password" name="notify_telegram_token" autocomplete="off" placeholder="{{ _("unchanged") if notify.notify_telegram_token else '123456:ABC…' }}">
+        <small class="muted">{{ _("From @BotFather. Empty = keep the saved one.") }}</small>
       </label>
       <label>Chat ID
-        <input name="notify_telegram_chat" value="{{ notify.notify_telegram_chat }}" autocomplete="off" placeholder="ex. 123456789">
-        <small class="muted">Gol = Telegram dezactivat.</small>
+        <input name="notify_telegram_chat" value="{{ notify.notify_telegram_chat }}" autocomplete="off" placeholder="{{ _("e.g. {example}", example="123456789") }}">
+        <small class="muted">{{ _("Empty = Telegram disabled.") }}</small>
       </label>
     </fieldset>
     <fieldset>
       <legend>Email (SMTP)</legend>
-      <label>Server <input name="notify_email_host" value="{{ notify.notify_email_host }}" autocomplete="off" placeholder="ex. smtp.gmail.com"></label>
+      <label>{{ _("Server") }} <input name="notify_email_host" value="{{ notify.notify_email_host }}" autocomplete="off" placeholder="{{ _("e.g. {example}", example="smtp.gmail.com") }}"></label>
       <div class="row-fields">
         <label>Port <input name="notify_email_port" value="{{ notify.notify_email_port }}" inputmode="numeric" placeholder="587"></label>
-        <label>Securitate
+        <label>{{ _("Security") }}
           <select name="notify_email_security">
-            {% for key, label in email_security.items() %}<option value="{{ key }}" {{ "selected" if notify.notify_email_security == key }}>{{ label }}</option>{% endfor %}
+            {% for key, label in email_security.items() %}<option value="{{ key }}" {{ "selected" if notify.notify_email_security == key }}>{{ _(label) }}</option>{% endfor %}
           </select>
         </label>
       </div>
-      <label>Utilizator <input name="notify_email_user" value="{{ notify.notify_email_user }}" autocomplete="off"></label>
-      <label>Parolă
-        <input type="password" name="notify_email_password" autocomplete="new-password" placeholder="{{ 'neschimbată' if notify.notify_email_password else '' }}">
-        <small class="muted">Pentru Gmail folosește o „parolă de aplicație”.</small>
+      <label>{{ _("Username") }} <input name="notify_email_user" value="{{ notify.notify_email_user }}" autocomplete="off"></label>
+      <label>{{ _("Password") }}
+        <input type="password" name="notify_email_password" autocomplete="new-password" placeholder="{{ _("unchanged") if notify.notify_email_password else '' }}">
+        <small class="muted">{{ _("For Gmail, use an “app password”.") }}</small>
       </label>
-      <label>De la <input name="notify_email_from" value="{{ notify.notify_email_from }}" autocomplete="off" placeholder="implicit: destinatarul"></label>
-      <label>Către <input type="email" name="notify_email_to" value="{{ notify.notify_email_to }}" autocomplete="off"></label>
+      <label>{{ _("From") }} <input name="notify_email_from" value="{{ notify.notify_email_from }}" autocomplete="off" placeholder="{{ _("default: the recipient") }}"></label>
+      <label>{{ _("To") }} <input type="email" name="notify_email_to" value="{{ notify.notify_email_to }}" autocomplete="off"></label>
     </fieldset>
     <fieldset>
-      <legend>Când</legend>
-      <label>Dispozitiv oprit de cel puțin (minute)
+      <legend>{{ _("When") }}</legend>
+      <label>{{ _("Device offline for at least (minutes)") }}
         <input type="number" name="notify_offline_min" value="{{ notify.notify_offline_min or 10 }}" min="1" max="1440" required>
       </label>
-      <label class="check"><input type="checkbox" name="notify_new_device" {{ "checked" if notify.notify_new_device }}><span>Dispozitiv nou necunoscut în rețea</span></label>
-      <label class="check"><input type="checkbox" name="notify_wol_failed" {{ "checked" if notify.notify_wol_failed }}><span>Pornire WOL eșuată</span></label>
+      <label class="check"><input type="checkbox" name="notify_new_device" {{ "checked" if notify.notify_new_device }}><span>{{ _("New unknown device on the network") }}</span></label>
+      <label class="check"><input type="checkbox" name="notify_wol_failed" {{ "checked" if notify.notify_wol_failed }}><span>{{ _("Failed WOL wake-up") }}</span></label>
     </fieldset>
-    <button class="primary">{{ icon("check") }} Salvează</button>
+    <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
   </form>
   <form method="post" action="/settings/notifications/test" class="inline">
     {{ csrf() }}
-    <button {{ "disabled" if not notify_channels }}>{{ icon("send") }} Trimite un mesaj de test</button>
+    <button {{ "disabled" if not notify_channels }}>{{ icon("send") }} {{ _("Send a test message") }}</button>
   </form>
 </section>
 
 {% endif %}
-<form method="post" action="/settings/password" class="card">
-  <h2>{{ icon("key") }} Schimbă parola</h2>
-  <p class="muted small">Autentificat ca <strong>{{ user.username }}</strong>.</p>
+<form method="post" action="/settings/language" class="card">
+  <h2>{{ icon("languages") }} {{ _("Language") }}</h2>
   {{ csrf() }}
-  <label>Parola actuală <input type="password" name="current" required autocomplete="current-password"></label>
-  <label>Parola nouă <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
-  <label>Confirmă parola nouă <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
-  <button class="primary">{{ icon("key") }} Schimbă parola</button>
+  <label>{{ _("Language of the interface") }}
+    <select name="language">
+      {% for code, label in languages.items() %}<option value="{{ code }}" {{ "selected" if code == user.language }}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <button class="primary">{{ icon("check") }} {{ _("Save") }}</button>
+</form>
+
+<form method="post" action="/settings/password" class="card">
+  <h2>{{ icon("key") }} {{ _("Change password") }}</h2>
+  <p class="muted small">{{ _("Signed in as {name}.", name=user.username) }}</p>
+  {{ csrf() }}
+  <label>{{ _("Current password") }} <input type="password" name="current" required autocomplete="current-password"></label>
+  <label>{{ _("New password") }} <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+  <label>{{ _("Confirm new password") }} <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
+  <button class="primary">{{ icon("key") }} {{ _("Change password") }}</button>
 </form>
 
 {% if user.is_admin %}
 <section class="card">
-  <h2>{{ icon("users") }} Utilizatori</h2>
-  <p class="muted small">Conturi pentru familie: membrii văd și pornesc doar dispozitivele din camerele permise.</p>
-  <a class="button" href="/users">{{ icon("users") }} Utilizatori</a>
+  <h2>{{ icon("users") }} {{ _("Users") }}</h2>
+  <p class="muted small">{{ _("Accounts for the family: members see and control only the devices in their allowed rooms.") }}</p>
+  <a class="button" href="/users">{{ icon("users") }} {{ _("Users") }}</a>
 </section>
 
 <section class="card">
-  <h2>{{ icon("calendar-clock") }} Programări WOL</h2>
-  <p class="muted small">Pornire automată a dispozitivelor sau a camerelor la oră fixă, în anumite zile.</p>
-  <a class="button" href="/schedules">{{ icon("calendar-clock") }} Programări</a>
+  <h2>{{ icon("calendar-clock") }} {{ _("WOL schedules") }}</h2>
+  <p class="muted small">{{ _("Wake devices or whole rooms automatically at a fixed time on chosen days.") }}</p>
+  <a class="button" href="/schedules">{{ icon("calendar-clock") }} {{ _("Schedules") }}</a>
 </section>
 
 <section class="card">
-  <h2>{{ icon("power-off") }} Oprire de la distanță</h2>
-  <p class="muted small">LanMon oprește dispozitivele prin SSH, cu cheia de mai jos. Adaug-o pe fiecare PC, apoi bifează „Permite oprirea de la distanță” în fișa lui. Pașii pentru Windows, Linux și macOS sunt în README.</p>
+  <h2>{{ icon("power-off") }} {{ _("Remote shutdown") }}</h2>
+  <p class="muted small">{{ _("LanMon shuts devices down over SSH with the key below. Add it on each PC, then tick “Allow remote shutdown” on its page. The steps for Windows, Linux and macOS are in the README.") }}</p>
   <textarea class="mono" rows="3" readonly onclick="this.select()">{{ ssh_public_key }}</textarea>
 </section>
 
 <section class="card" id="api">
   <h2>{{ icon("plug") }} Home Assistant (API)</h2>
-  <p class="muted small">Tokenuri pentru API-ul REST <code>/api/v1</code>: starea dispozitivelor, pornire și oprire. Configurarea Home Assistant e descrisă în README.</p>
+  <p class="muted small">{{ _("Tokens for the REST API (/api/v1): device status, wake-up and shutdown. The Home Assistant setup is described in the README.") }}</p>
   {% if new_token %}
   <div class="notice">
-    <p class="small"><strong>Token nou pentru „{{ new_token_name }}”.</strong> Copiază-l acum; nu mai poate fi afișat.</p>
+    <p class="small"><strong>{{ _("New token for “{name}”.", name=new_token_name) }}</strong> {{ _("Copy it now; it can't be shown again.") }}</p>
     <textarea class="mono" rows="2" readonly onclick="this.select()">{{ new_token }}</textarea>
   </div>
   {% endif %}
@@ -117,34 +128,34 @@
   <ul class="history">
     {% for t in api_tokens %}
     <li class="row">
-      <span class="grow">{{ t.name }} <code class="small">{{ t.prefix }}…</code><br><small class="muted">folosit {{ ago(t.last_used_at) if t.last_used_at else "niciodată" }}</small></span>
-      <form method="post" action="/settings/tokens/{{ t.id }}/delete" onsubmit="return confirm('Revoci tokenul „{{ t.name }}”?')">{{ csrf() }}<button class="danger icon-button" title="Revocă">{{ icon("trash-2") }}<span class="sr">Revocă</span></button></form>
+      <span class="grow">{{ t.name }} <code class="small">{{ t.prefix }}…</code><br><small class="muted">{% if t.last_used_at %}{{ _("last used") }} {{ ago(t.last_used_at) }}{% else %}{{ _("never used") }}{% endif %}</small></span>
+      <form method="post" action="/settings/tokens/{{ t.id }}/delete" data-confirm="{{ _("Revoke the token “{name}”?", name=t.name) }}">{{ csrf() }}<button class="danger icon-button" title="{{ _("Revoke") }}">{{ icon("trash-2") }}<span class="sr">{{ _("Revoke") }}</span></button></form>
     </li>
     {% endfor %}
   </ul>
   {% endif %}
   <form method="post" action="/settings/tokens" class="row">
     {{ csrf() }}
-    <input name="name" placeholder="Nume, ex. Home Assistant" maxlength="100" class="grow">
-    <button>{{ icon("plus") }} Token nou</button>
+    <input name="name" placeholder="{{ _("Name, e.g. Home Assistant") }}" maxlength="100" class="grow">
+    <button>{{ icon("plus") }} {{ _("New token") }}</button>
   </form>
 </section>
 
 <section class="card">
   <h2>{{ icon("download") }} Backup</h2>
-  <p class="muted small">Copie completă a bazei de date: dispozitive, camere, tipuri, istoric și jurnal. Restaurarea e descrisă în README.</p>
-  <a class="button" href="/settings/backup">{{ icon("download") }} Descarcă backup</a>
+  <p class="muted small">{{ _("A full copy of the database: devices, rooms, types, history and log. Restoring is described in the README.") }}</p>
+  <a class="button" href="/settings/backup">{{ icon("download") }} {{ _("Download backup") }}</a>
 </section>
 
 <section class="card">
-  <h2>{{ icon("eye-off") }} Dispozitive ignorate</h2>
-  <p class="muted small">Le poți reactiva din <a href="/unassigned">Neasignate</a>, secțiunea „Ignorate”.</p>
+  <h2>{{ icon("eye-off") }} {{ _("Ignored devices") }}</h2>
+  <p class="muted small">{{ _('You can restore them from <a href="/unassigned">Unassigned</a>, in the “Ignored” section.')|safe }}</p>
 </section>
 {% endif %}
 </div>
 
 <form method="post" action="/logout">
   {{ csrf() }}
-  <button>{{ icon("log-out") }} Ieșire</button>
+  <button>{{ icon("log-out") }} {{ _("Sign out") }}</button>
 </form>
 {% endblock %}

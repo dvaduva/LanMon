@@ -6,24 +6,24 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Setări din variabile de mediu cu prefixul LANMON_ (sau din .env)."""
+    """Settings from LANMON_* environment variables (or from .env)."""
 
     model_config = SettingsConfigDict(env_prefix="LANMON_", env_file=".env", extra="ignore")
 
     host: str = "0.0.0.0"
     port: int = 8765
-    # Relativ la folderul curent când rulează local; imaginea Docker setează /data.
+    # Relative to the current folder when running locally; the Docker image sets /data.
     data_dir: Path = Path("data")
     subnet: str | None = None
     interface: str | None = None
     secret_key: str = ""
     log_level: str = "info"
-    # Fusul orar pentru programările WOL.
+    # Time zone for WOL schedules and uptime days.
     tz: str = "Europe/Bucharest"
     version: str = "dev"
-    # Cookie-ul de sesiune doar prin HTTPS (ex. în spatele `tailscale serve`).
+    # Session cookie over HTTPS only (e.g. behind `tailscale serve`).
     cookie_secure: bool = False
-    # Scanerul și ping-ul; dezactivate în teste.
+    # Scanner, pinger and other background tasks; disabled in tests.
     background_tasks: bool = True
 
     @property
@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         return self.data_dir / "lanmon.db"
 
     def resolved_secret_key(self) -> str:
-        """LANMON_SECRET_KEY sau, dacă lipsește, o cheie generată o dată și păstrată în data_dir."""
+        """LANMON_SECRET_KEY or, if missing, a key generated once and kept in data_dir."""
         if self.secret_key:
             return self.secret_key
         path = self.data_dir / "secret.key"

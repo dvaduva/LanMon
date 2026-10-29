@@ -1,4 +1,4 @@
-"""Disponibilitate pe zile, calculată din status_events (schimbările de stare)."""
+"""Daily uptime, computed from status_events (the status changes)."""
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
@@ -14,7 +14,7 @@ from app.db.models import StatusEvent
 class Day:
     day: date
     online_s: float
-    known_s: float  # timp cu stare cunoscută (pornit sau oprit)
+    known_s: float  # time with a known status (online or offline)
 
     @property
     def percent(self) -> float | None:
@@ -42,12 +42,12 @@ def compute(
     days: int,
     tz: ZoneInfo,
 ) -> Uptime:
-    """`changes` = (moment, stare) în ordine; `initial` = starea dinaintea primei zile."""
+    """`changes` = (moment, status) in order; `initial` = the status before the first day."""
     today = now.astimezone(tz).date()
     first = today - timedelta(days=days - 1)
     start = _local_midnight(first, tz)
 
-    # Intervale (început, sfârșit, stare) între start și acum.
+    # Intervals (start, end, status) between the start and now.
     intervals = []
     state, since = initial, start
     for at, status in changes:

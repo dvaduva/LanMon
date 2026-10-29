@@ -1,4 +1,4 @@
-"""Server-Sent Events: schimbările de stare ajung în browser fără refresh."""
+"""Server-Sent Events: status changes reach the browser without a reload."""
 
 import asyncio
 import json
@@ -16,7 +16,7 @@ LIVE_EVENTS = {"device_status", "service_status", "wol", "scan_completed", "devi
 
 
 def _authenticated(request: Request) -> bool:
-    # Fără Depends(get_db): sesiunea DB nu trebuie ținută deschisă cât durează fluxul.
+    # No Depends(get_db): the DB session must not stay open for the whole stream.
     uid = request.session.get("uid")
     if not uid:
         return False

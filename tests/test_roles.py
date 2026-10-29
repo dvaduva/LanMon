@@ -23,7 +23,7 @@ def seed(sf):
                     wol_enabled=True,
                     status="offline",
                 ),
-                Device(mac="aa:bb:cc:dd:ee:03", name="Fără cameră"),
+                Device(mac="aa:bb:cc:dd:ee:03", name="Roomless"),
             ]
         )
 
@@ -58,7 +58,7 @@ def test_admin_creates_member_with_rooms(admin):
     )
     assert response.status_code == 303
     page = admin.get("/users").text
-    assert "ana" in page and "Membru" in page and "Birou" in page
+    assert "ana" in page and "Member" in page and "Birou" in page
 
     short = post(
         admin,
@@ -73,7 +73,7 @@ def test_admin_creates_member_with_rooms(admin):
         {"username": "ANA", "password": "parola-ana", "role": "member"},
         page="/users/new",
     )
-    assert dup.status_code == 400 and "Există deja" in dup.text
+    assert dup.status_code == 400 and "already exists" in dup.text
 
 
 def make_member(sf, rooms=("Birou",)):
@@ -98,7 +98,7 @@ def test_member_sees_only_allowed_rooms(admin):
     login_as(admin, "ana", "parola-ana")
 
     page = admin.get("/").text
-    assert "PC birou" in page and "TV living" not in page and "Fără cameră" not in page
+    assert "PC birou" in page and "TV living" not in page and "Roomless" not in page
     assert 'action="/scan"' not in page and 'href="/unassigned"' not in page
 
     assert admin.get("/devices/1").status_code == 200
@@ -134,9 +134,8 @@ def test_member_cannot_use_admin_pages(admin):
         assert response.status_code == 403, (method, url)
 
     settings = admin.get("/settings").text
-    assert (
-        "Schimbă parola" in settings and "Notificări" not in settings and "Backup" not in settings
-    )
+    assert "Change password" in settings
+    assert "Notifications" not in settings and "Backup" not in settings
 
 
 def test_member_wakes_only_allowed_devices(admin):
@@ -154,7 +153,7 @@ def test_member_wakes_only_allowed_devices(admin):
 
 def test_last_admin_is_protected(admin):
     response = post(admin, "/users/1", {"username": "admin", "role": "member"}, page="/users/1")
-    assert response.status_code == 400 and "cel puțin un administrator" in response.text
+    assert response.status_code == 400 and "one administrator must remain" in response.text
     post(admin, "/users/1/delete", page="/settings")
     with admin.app.state.session_factory() as s:
         assert s.get(User, 1).role == "admin"

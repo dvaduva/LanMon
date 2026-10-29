@@ -1,4 +1,4 @@
-"""Verificări pe porturi TCP
+"""TCP port checks
 
 Revision ID: 0004
 Revises: 0003

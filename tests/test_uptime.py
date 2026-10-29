@@ -9,7 +9,7 @@ from app.services.uptime import compute, device_uptime
 from tests.test_web import post
 
 TZ = ZoneInfo("Europe/Bucharest")
-NOW = datetime(2026, 11, 4, 12, 0, tzinfo=TZ).astimezone(UTC)  # miercuri, ora 12
+NOW = datetime(2026, 11, 4, 12, 0, tzinfo=TZ).astimezone(UTC)  # Wednesday, noon
 
 
 def at(day, hour):
@@ -20,9 +20,9 @@ def test_compute_splits_by_local_day():
     changes = [(at(3, 8), "online"), (at(3, 20), "offline"), (at(4, 6), "online")]
     uptime = compute(changes, "offline", NOW, 3, TZ)
     d2, d3, d4 = uptime.days
-    assert d2.percent == 0  # toată ziua oprit
-    assert d3.percent == pytest.approx(50)  # 12 h din 24
-    assert d4.known_s == 12 * 3600 and d4.percent == pytest.approx(50)  # 6 h din 12 până acum
+    assert d2.percent == 0  # offline all day
+    assert d3.percent == pytest.approx(50)  # 12 h out of 24
+    assert d4.known_s == 12 * 3600 and d4.percent == pytest.approx(50)  # 6 h out of 12 so far
     assert uptime.percent(2) == pytest.approx(100 * 18 / 36)
 
 
@@ -69,7 +69,7 @@ def test_pages_show_uptime(admin):
         )
     page = admin.get("/uptime").text
     assert "PC birou" in page and "100%" in page and "TV" in page
-    assert "Disponibilitate" in admin.get("/devices/1").text
+    assert "Uptime" in admin.get("/devices/1").text
 
     post(admin, "/logout", page="/settings")
     post(admin, "/login", {"username": "ana", "password": "parola-ana"})

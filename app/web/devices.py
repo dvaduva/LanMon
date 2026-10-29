@@ -7,8 +7,19 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import ActionLog, Device, StatusEvent, User
+from app.services.shutdown import describe
 from app.services.uptime import device_uptime
-from app.web.deps import Forbidden, admin_user, current_user, flash, get_db, redirect, templates
+from app.web.deps import (
+    Forbidden,
+    admin_user,
+    current_user,
+    flash,
+    get_db,
+    language,
+    redirect,
+    t,
+    templates,
+)
 from app.web.forms import DeviceForm, choices
 
 router = APIRouter(prefix="/devices")
@@ -86,13 +97,13 @@ async def update(
     if device is None:
         return redirect(request, "/")
     form = DeviceForm.parse(await request.form())
-    error = form.validate(db)
+    error = form.validate(request, db)
     if error:
         context = _context(request, db, device, form, error=error)
         return templates.TemplateResponse(request, "device.html", context, status_code=400)
     form.apply(device)
     db.commit()
-    flash(request, "Modificările au fost salvate.")
+    flash(request, t(request, "Changes saved."))
     return redirect(request, f"/devices/{device.id}")
 
 
@@ -109,8 +120,8 @@ async def shutdown(
     if not user.can_see(device):
         raise Forbidden
     db.close()
-    ok, message = await request.app.state.shutdowner.shutdown(device_id, source="user")
-    flash(request, message, "ok" if ok else "error")
+    result = await request.app.state.shutdowner.shutdown(device_id, source="user")
+    flash(request, describe(language(request), result), "ok" if result.ok else "error")
     return redirect(request, f"/devices/{device_id}")
 
 
@@ -125,5 +136,10 @@ def delete(
     if device is not None:
         db.delete(device)
         db.commit()
-        flash(request, f"„{device.name}” a fost șters. Va reapărea în „Neasignate” la scanare.")
+        message = t(
+            request,
+            "“{name}” was deleted. It shows up again in “Unassigned” on the next scan.",
+            name=device.name,
+        )
+        flash(request, message)
     return redirect(request, "/")

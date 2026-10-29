@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Device, Room, User
-from app.web.deps import admin_user, current_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, current_user, flash, get_db, redirect, t, templates
 from app.web.unassigned import unassigned_count
 from app.web.wol import wol_states
 
@@ -58,7 +58,7 @@ def dashboard(
         "scan_error": request.app.state.scanner.last_error,
         "wol": wol_states(request, db),
     }
-    # Reîmprospătarea periodică (HTMX) cere doar lista; SSE vine în Faza 4.
+    # Periodic and live (HTMX) refreshes ask for the list fragment only.
     template = "_dashboard_groups.html" if request.headers.get("HX-Request") else "dashboard.html"
     return templates.TemplateResponse(request, template, context)
 
@@ -66,5 +66,7 @@ def dashboard(
 @router.post("/scan")
 def scan_now(request: Request, user: User = Depends(admin_user)) -> Response:
     request.app.state.scanner.request_scan()
-    flash(request, "Scanarea a pornit. Dispozitivele noi apar în „Neasignate” în câteva secunde.")
+    flash(
+        request, t(request, "Scan started. New devices show up in “Unassigned” in a few seconds.")
+    )
     return redirect(request, request.headers.get("HX-Current-URL") or "/")

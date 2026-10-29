@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from "_macros.html" import icon, pct, status_dot, uptime_strip with context %}
-{% block title %}Disponibilitate · LanMon{% endblock %}
+{% block title %}{{ _("Uptime") }} · LanMon{% endblock %}
 {% block content %}
-<h1>Disponibilitate</h1>
-<p class="muted">Cât timp a fost pornit fiecare dispozitiv, pe ultimele {{ days }} de zile (o celulă = o zi; gri = fără date).</p>
-{% if not groups %}<div class="card empty"><p>Niciun dispozitiv.</p></div>{% endif %}
+<h1>{{ _("Uptime") }}</h1>
+<p class="muted">{{ _("How long each device was online over the last {days} days (one cell = one day; grey = no data).", days=days) }}</p>
+{% if not groups %}<div class="card empty"><p>{{ _("No devices.") }}</p></div>{% endif %}
 {% for group in groups %}
 <section class="card">
-  <h2>{{ icon(group.room.icon if group.room else "door-open") }} {{ group.room.name if group.room else "Fără cameră" }}</h2>
+  <h2>{{ icon(group.room.icon if group.room else "door-open") }} {{ group.room.name if group.room else _("No room") }}</h2>
   <table class="uptime-table">
-    <thead><tr><th>Dispozitiv</th><th class="num">7 zile</th><th class="num">30 de zile</th><th class="strip-col">Ultimele 30 de zile</th></tr></thead>
+    <thead><tr><th>{{ _("Device") }}</th><th class="num">{{ _("7 days") }}</th><th class="num">{{ _("30 days") }}</th><th class="strip-col">{{ _("Last {days} days", days=days) }}</th></tr></thead>
     <tbody>
       {% for d in group.devices %}{% set u = uptimes[d.id] %}
       <tr>

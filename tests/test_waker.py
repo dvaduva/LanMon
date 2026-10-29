@@ -132,7 +132,7 @@ def test_send_error_is_logged(session_factory):
     waker, _ = make_waker(session_factory, lan)
     assert asyncio.run(waker.wake([device_id])) == []
     entry = last_action(session_factory)
-    assert (entry.result, entry.detail) == ("error", "Network is unreachable")
+    assert (entry.result, entry.detail) == ("error", "Sending failed: Network is unreachable")
 
 
 def test_interrupted_actions_closed_on_startup(session_factory):

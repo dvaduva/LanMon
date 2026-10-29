@@ -40,7 +40,7 @@ from app.web import (
 from app.web import (
     settings as settings_page,
 )
-from app.web.deps import CsrfError, Forbidden, Redirect, redirect, templates, verify_csrf
+from app.web.deps import CsrfError, Forbidden, Redirect, redirect, t, templates, verify_csrf
 from app.web.health import router as health_router
 
 log = logging.getLogger("lanmon")
@@ -57,7 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         if not settings.secret_key:
             log.warning(
-                "LANMON_SECRET_KEY nu e setat; folosesc cheia generată în %s.",
+                "LANMON_SECRET_KEY is not set; using the key generated in %s.",
                 (settings.data_dir / "secret.key").resolve(),
             )
         await asyncio.to_thread(
@@ -109,7 +109,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.events = EventBus()
 
     def network():
-        # Subnetul din Setări are întâietate față de LANMON_SUBNET; altfel autodetecție.
+        # The subnet in Settings takes precedence over LANMON_SUBNET; otherwise autodetect.
         with app.state.session_factory() as session:
             subnet = get_str(session, "subnet") or settings.subnet
         return resolve_network(settings.interface, subnet)
@@ -150,7 +150,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/sw.js", include_in_schema=False)
     def service_worker() -> FileResponse:
-        # Servit din rădăcină ca să controleze tot site-ul.
+        # Served from the root so it controls the whole site.
         return FileResponse(STATIC_DIR / "sw.js", media_type="text/javascript")
 
     @app.exception_handler(Redirect)
@@ -160,13 +160,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(Forbidden)
     async def on_forbidden(request: Request, exc: Forbidden) -> Response:
         return templates.TemplateResponse(
-            request, "error.html", {"message": "Nu ai acces la această pagină."}, 403
+            request,
+            "error.html",
+            {"message": t(request, "You don't have access to this page.")},
+            403,
         )
 
     @app.exception_handler(CsrfError)
     async def on_csrf_error(request: Request, exc: CsrfError) -> Response:
         return templates.TemplateResponse(
-            request, "error.html", {"message": "Formularul a expirat. Reîncarcă pagina."}, 403
+            request,
+            "error.html",
+            {"message": t(request, "The form expired. Reload the page.")},
+            403,
         )
 
     return app

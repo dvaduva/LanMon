@@ -5,12 +5,18 @@ from sqlalchemy import select
 
 from app.db.models import ActionLog, Device, Room, User
 from app.security import hash_password
-from app.services.shutdown import Shutdowner, key_fingerprint, load_or_create_key
+from app.services.shutdown import (
+    Shutdowner,
+    ShutdownResult,
+    describe,
+    key_fingerprint,
+    load_or_create_key,
+)
 from tests.test_web import post
 
 
 class FakeHost:
-    """Server SSH local: acceptă doar cheia aplicației și reține comenzile primite."""
+    """Local SSH server: accepts only the app's key and records the commands it gets."""
 
     def __init__(self, client_public_key: str, exit_status: int = 0, stderr: str = "") -> None:
         self.host_key = asyncssh.generate_private_key("ssh-ed25519")
@@ -79,7 +85,7 @@ def test_shutdown_runs_os_command_and_remembers_host_key(session_factory, tmp_pa
             return host, first, second
 
     host, first, second = asyncio.run(scenario())
-    assert first[0] and second[0], (first, second)
+    assert first.ok and second.ok, (first, second)
     assert host.commands == [("dan", "shutdown /s /t 0")] * 2
     with session_factory() as s:
         assert s.get(Device, device_id).ssh_host_key == key_fingerprint(host.host_key)
@@ -100,8 +106,9 @@ def test_changed_host_key_is_refused(session_factory, tmp_path):
             shutdowner.port = host.port
             return host, await shutdowner.shutdown(device_id)
 
-    host, (ok, message) = asyncio.run(scenario())
-    assert not ok and "amprenta SSH s-a schimbat" in message
+    host, result = asyncio.run(scenario())
+    assert not result.ok and "host key changed" in result.detail
+    assert "Amprenta SSH s-a schimbat" in describe("ro", result)
     assert host.commands == []
 
 
@@ -124,14 +131,18 @@ def test_failed_command_and_unknown_key(session_factory, tmp_path):
         return failed, denied
 
     failed, denied = asyncio.run(scenario())
-    assert not failed[0] and "sudo: a password is required" in failed[1]
-    assert not denied[0] and "cheia aplicației nu e acceptată" in denied[1]
+    assert not failed.ok and failed.detail == "The command failed: sudo: a password is required"
+    assert describe("ro", failed) == (
+        "Nu am putut opri „PC birou”: Comanda a eșuat: sudo: a password is required"
+    )
+    assert not denied.ok and "key isn't accepted" in denied.detail
 
 
 def test_disabled_device_is_not_contacted(session_factory, tmp_path):
     device_id = add_device(session_factory, shutdown_enabled=False)
-    ok, message = asyncio.run(Shutdowner(session_factory, tmp_path / "k").shutdown(device_id))
-    assert not ok and "nu are oprirea" in message
+    result = asyncio.run(Shutdowner(session_factory, tmp_path / "k").shutdown(device_id))
+    assert result.status == "disabled"
+    assert describe("en", result) == "The device doesn't have remote shutdown enabled."
 
 
 class FakeShutdowner:
@@ -143,7 +154,7 @@ class FakeShutdowner:
 
     async def shutdown(self, device_id: int, source: str = "user"):
         self.calls.append((device_id, source))
-        return True, "Am trimis comanda de oprire."
+        return ShutdownResult("ok", "PC birou")
 
 
 def test_shutdown_button_and_permissions(admin):
@@ -170,7 +181,7 @@ def test_shutdown_button_and_permissions(admin):
     response = post(admin, f"/devices/{device_id}/shutdown", page=f"/devices/{device_id}")
     assert response.status_code == 303 and fake.calls == [(device_id, "user")]
 
-    # Formularul salvează setările de oprire și poate uita amprenta memorată.
+    # The form saves the shutdown settings and can forget the remembered host key.
     with sf.begin() as s:
         s.get(Device, device_id).ssh_host_key = "ssh-ed25519 OLD"
     response = post(
@@ -197,7 +208,7 @@ def test_shutdown_button_and_permissions(admin):
         {"name": "PC birou", "shutdown_enabled": "on", "ssh_user": ""},
         page=f"/devices/{device_id}",
     )
-    assert response.status_code == 400 and "utilizatorul SSH" in response.text
+    assert response.status_code == 400 and "the SSH user" in response.text
 
     post(admin, "/logout", page="/settings")
     post(admin, "/login", {"username": "ana", "password": "parola-ana"})
@@ -211,5 +222,5 @@ def test_shutdown_button_and_permissions(admin):
 def test_unreachable_host(session_factory, tmp_path):
     device_id = add_device(session_factory)
     shutdowner = Shutdowner(session_factory, tmp_path / "ssh_key", port=1)
-    ok, message = asyncio.run(shutdowner.shutdown(device_id))
-    assert not ok and "conexiunea SSH a eșuat" in message and "()" not in message
+    result = asyncio.run(shutdowner.shutdown(device_id))
+    assert not result.ok and result.detail.startswith("The SSH connection failed: ")

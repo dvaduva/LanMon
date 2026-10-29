@@ -17,6 +17,6 @@ def test_send_magic_packet_reaches_listener():
         listener.settimeout(2)
         port = listener.getsockname()[1]
         sent = send_magic_packet("aa:bb:cc:dd:ee:ff", ["127.0.0.1", "127.0.0.1"], [port])
-        assert sent == 1  # adresele duplicate se trimit o singură dată
+        assert sent == 1  # duplicate addresses are sent to only once
         data, _ = listener.recvfrom(1024)
         assert data == build_magic_packet("aa:bb:cc:dd:ee:ff")

@@ -1,52 +1,52 @@
 {% extends "base.html" %}
 {% from "_macros.html" import ago, csrf, icon with context %}
-{% block title %}Programări · LanMon{% endblock %}
+{% block title %}{{ _("Schedules") }} · LanMon{% endblock %}
 {% block content %}
-<h1>Programări WOL</h1>
-<p class="muted">Pornire automată la oră fixă (fus orar {{ tz }}). Se pornesc doar dispozitivele cu Wake-on-LAN care nu sunt deja pornite.</p>
+<h1>{{ _("WOL schedules") }}</h1>
+<p class="muted">{{ _("Automatic wake-up at a fixed time (time zone {tz}). Only devices with Wake-on-LAN that aren't already online are woken.", tz=tz) }}</p>
 
 <div class="card-grid">
 <section class="card">
-  <h2>{{ icon("calendar-clock") }} Programări</h2>
-  {% if not schedules %}<p class="muted">Nicio programare încă.</p>{% endif %}
+  <h2>{{ icon("calendar-clock") }} {{ _("Schedules") }}</h2>
+  {% if not schedules %}<p class="muted">{{ _("No schedules yet.") }}</p>{% endif %}
   <ul class="list plain">
     {% for s in schedules %}
     <li class="row{{ ' muted' if not s.enabled }}">
       {{ icon(s.room.icon if s.room else "power") }}
       <div class="grow">
-        <strong>{{ s.device.name if s.device else ("Toată camera " ~ s.room.name) }}</strong>
-        <div class="small muted">{{ s.time }} · {{ describe_days(s.weekdays) }}{% if not s.enabled %} · dezactivată{% endif %}{% if s.last_run_at %} · ultima rulare {{ ago(s.last_run_at) }}{% endif %}</div>
+        <strong>{{ s.device.name if s.device else _("Whole room {name}", name=s.room.name) }}</strong>
+        <div class="small muted">{{ s.time }} · {{ describe_days(s.weekdays) }}{% if not s.enabled %} · {{ _("disabled") }}{% endif %}{% if s.last_run_at %} · {{ _("last run") }} {{ ago(s.last_run_at) }}{% endif %}</div>
       </div>
-      <form method="post" action="/schedules/{{ s.id }}/toggle">{{ csrf() }}<button title="{{ 'Dezactivează' if s.enabled else 'Activează' }}">{{ "Dezactivează" if s.enabled else "Activează" }}</button></form>
-      <form method="post" action="/schedules/{{ s.id }}/delete" onsubmit="return confirm('Ștergi programarea?')">{{ csrf() }}<button class="danger icon-button" title="Șterge">{{ icon("trash-2") }}<span class="sr">Șterge</span></button></form>
+      <form method="post" action="/schedules/{{ s.id }}/toggle">{{ csrf() }}<button>{{ _("Disable") if s.enabled else _("Enable") }}</button></form>
+      <form method="post" action="/schedules/{{ s.id }}/delete" data-confirm="{{ _("Delete the schedule?") }}">{{ csrf() }}<button class="danger icon-button" title="{{ _("Delete") }}">{{ icon("trash-2") }}<span class="sr">{{ _("Delete") }}</span></button></form>
     </li>
     {% endfor %}
   </ul>
 </section>
 
 <form method="post" action="/schedules" class="card">
-  <h2>{{ icon("plus") }} Programare nouă</h2>
+  <h2>{{ icon("plus") }} {{ _("New schedule") }}</h2>
   {{ csrf() }}
-  <label>Ce pornește
+  <label>{{ _("What to wake") }}
     <select name="target" required>
-      <option value="">Alege…</option>
-      {% if devices %}<optgroup label="Dispozitive cu WOL">
+      <option value="">{{ _("Choose…") }}</option>
+      {% if devices %}<optgroup label="{{ _("Devices with WOL") }}">
         {% for d in devices %}<option value="device:{{ d.id }}" {{ "selected" if values.target == "device:" ~ d.id }}>{{ d.name }}</option>{% endfor %}
       </optgroup>{% endif %}
-      {% if rooms %}<optgroup label="Toată camera">
+      {% if rooms %}<optgroup label="{{ _("Whole room") }}">
         {% for r in rooms %}<option value="room:{{ r.id }}" {{ "selected" if values.target == "room:" ~ r.id }}>{{ r.name }}</option>{% endfor %}
       </optgroup>{% endif %}
     </select>
-    {% if not devices %}<small class="muted">Niciun dispozitiv nu are Wake-on-LAN bifat în fișă.</small>{% endif %}
+    {% if not devices %}<small class="muted">{{ _("No device has Wake-on-LAN ticked on its page.") }}</small>{% endif %}
   </label>
-  <label>Ora <input type="time" name="time" value="{{ values.time }}" required></label>
+  <label>{{ _("Time") }} <input type="time" name="time" value="{{ values.time }}" required></label>
   <fieldset>
-    <legend>Zile</legend>
+    <legend>{{ _("Days") }}</legend>
     <div class="days">
-      {% for name in weekdays %}<label class="check"><input type="checkbox" name="days" value="{{ loop.index0 }}" {{ "checked" if (loop.index0|string) in values.days }}><span>{{ name }}</span></label>{% endfor %}
+      {% for name in weekdays %}<label class="check"><input type="checkbox" name="days" value="{{ loop.index0 }}" {{ "checked" if (loop.index0|string) in values.days }}><span>{{ _(name) }}</span></label>{% endfor %}
     </div>
   </fieldset>
-  <button class="primary">{{ icon("check") }} Adaugă</button>
+  <button class="primary">{{ icon("check") }} {{ _("Add") }}</button>
 </form>
 </div>
 {% endblock %}

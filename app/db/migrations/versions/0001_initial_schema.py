@@ -1,4 +1,4 @@
-"""Schema inițială + tipuri predefinite și setări implicite
+"""Initial schema + built-in device types and default settings
 
 Revision ID: 0001
 Revises:
@@ -131,12 +131,12 @@ def upgrade() -> None:
         ("Laptop", "laptop"),
         ("TV", "tv"),
         ("NAS", "hard-drive"),
-        ("Imprimantă", "printer"),
-        ("Telefon", "smartphone"),
-        ("Tabletă", "tablet"),
+        ("Printer", "printer"),
+        ("Phone", "smartphone"),
+        ("Tablet", "tablet"),
         ("IoT", "cpu"),
         ("Router/AP", "router"),
-        ("Altele", "circle-help"),
+        ("Other", "circle-help"),
     ]
     op.bulk_insert(
         device_types,
