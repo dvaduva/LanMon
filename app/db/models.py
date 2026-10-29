@@ -1,6 +1,16 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, TypeDecorator
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+    Text,
+    TypeDecorator,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -155,11 +165,34 @@ class Setting(Base):
     value: Mapped[str | None] = mapped_column(Text)
 
 
+user_rooms = Table(
+    "user_rooms",
+    Base.metadata,
+    Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("room_id", ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True),
+)
+
+ADMIN, MEMBER = "admin", "member"
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    # admin: tot; member: vede și pornește doar dispozitivele din camerele permise.
+    role: Mapped[str] = mapped_column(String(10), default=ADMIN, server_default=ADMIN)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
     last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+    rooms: Mapped[list[Room]] = relationship(secondary=user_rooms, order_by=Room.sort_order)
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == ADMIN
+
+    def can_see(self, device: "Device") -> bool:
+        if self.is_admin:
+            return True
+        return device.room_id is not None and device.room_id in {r.id for r in self.rooms}

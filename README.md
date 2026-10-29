@@ -129,6 +129,14 @@ Pe lângă ping, LanMon poate verifica dacă un serviciu răspunde: porturi impl
 răspunde la ping, la același interval. După două verificări la rând cu porturi închise apare
 „Serviciu căzut” pe Dashboard și în fișă; pentru dispozitivele cu notificări vine și un mesaj.
 
+## Utilizatori
+
+Setări → Utilizatori (doar pentru administratori). Un **administrator** vede și modifică tot.
+Un **membru** vede pe Dashboard doar dispozitivele din camerele bifate la contul lui, le poate
+deschide fișa și le poate porni; nu are acces la Neasignate, Camere, Jurnal, Programări sau
+Setări (își poate schimba doar parola). Contul creat la prima pornire e administrator și
+trebuie să rămână mereu cel puțin un administrator.
+
 ## Backup și restaurare
 
 - **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,

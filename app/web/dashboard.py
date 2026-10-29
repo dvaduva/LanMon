@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import Device, Room, User
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, current_user, flash, get_db, redirect, templates
 from app.web.unassigned import unassigned_count
 from app.web.wol import wol_states
 
@@ -27,11 +27,13 @@ class RoomGroup:
         return sum(d.wol_enabled and d.status == "offline" for d in self.devices)
 
 
-def group_by_room(db: Session) -> list[RoomGroup]:
+def group_by_room(db: Session, user: User | None = None) -> list[RoomGroup]:
     rooms = db.scalars(select(Room).order_by(Room.sort_order, Room.name)).all()
     devices = db.scalars(
         select(Device).options(selectinload(Device.type)).order_by(Device.name)
     ).all()
+    if user is not None:
+        devices = [d for d in devices if user.can_see(d)]
     groups = {room.id: RoomGroup(room) for room in rooms}
     no_room = RoomGroup(None)
     for device in devices:
@@ -46,12 +48,12 @@ def group_by_room(db: Session) -> list[RoomGroup]:
 def dashboard(
     request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
 ) -> Response:
-    groups = group_by_room(db)
+    groups = group_by_room(db, user)
     context = {
         "groups": groups,
         "online": sum(g.online for g in groups),
         "total": sum(len(g.devices) for g in groups),
-        "unassigned": unassigned_count(db),
+        "unassigned": unassigned_count(db) if user.is_admin else 0,
         "last_scan": request.app.state.scanner.last_result,
         "scan_error": request.app.state.scanner.last_error,
         "wol": wol_states(request, db),
@@ -62,7 +64,7 @@ def dashboard(
 
 
 @router.post("/scan")
-def scan_now(request: Request, user: User = Depends(current_user)) -> Response:
+def scan_now(request: Request, user: User = Depends(admin_user)) -> Response:
     request.app.state.scanner.request_scan()
     flash(request, "Scanarea a pornit. Dispozitivele noi apar în „Neasignate” în câteva secunde.")
     return redirect(request, request.headers.get("HX-Current-URL") or "/")

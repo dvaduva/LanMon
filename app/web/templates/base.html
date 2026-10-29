@@ -21,10 +21,12 @@
     <a class="brand" href="/">LanMon</a>
     <nav>
       <a href="/" class="{{ 'active' if request.url.path == '/' }}">{{ icon("layout-dashboard") }}<span>Dashboard</span></a>
+      {% if viewer(request).is_admin %}
       <a href="/unassigned" class="{{ 'active' if request.url.path.startswith('/unassigned') }}">{{ icon("inbox") }}<span>Neasignate</span></a>
       <a href="/rooms" class="{{ 'active' if request.url.path.startswith(('/rooms', '/types')) }}">{{ icon("house") }}<span>Camere</span></a>
       <a href="/log" class="{{ 'active' if request.url.path.startswith('/log') }}">{{ icon("list") }}<span>Jurnal</span></a>
-      <a href="/settings" class="{{ 'active' if request.url.path.startswith('/settings') }}">{{ icon("settings") }}<span>Setări</span></a>
+      {% endif %}
+      <a href="/settings" class="{{ 'active' if request.url.path.startswith(('/settings', '/users', '/schedules')) }}">{{ icon("settings") }}<span>Setări</span></a>
     </nav>
   </header>
   {% endblock %}

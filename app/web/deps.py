@@ -80,10 +80,29 @@ def has_users(db: Session) -> bool:
     return bool(db.scalar(select(exists().where(User.id.is_not(None)))))
 
 
+class Forbidden(Exception):  # noqa: N818 — semnal: pagina e doar pentru administrator
+    pass
+
+
 def current_user(request: Request, db: Session = Depends(get_db)) -> User:
     uid = request.session.get("uid")
     user = db.get(User, uid) if uid else None
     if user is None or request.session.get("fp") != session_fingerprint(user):
         request.session.pop("uid", None)
         raise Redirect("/login" if has_users(db) else "/setup")
+    request.state.user = user
     return user
+
+
+def admin_user(user: User = Depends(current_user)) -> User:
+    if not user.is_admin:
+        raise Forbidden
+    return user
+
+
+def viewer(request: Request) -> User | None:
+    """Utilizatorul curent, pentru șabloane (meniul diferă pentru membri)."""
+    return getattr(request.state, "user", None)
+
+
+templates.env.globals["viewer"] = viewer

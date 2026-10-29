@@ -18,7 +18,7 @@
       <strong>Wake-on-LAN</strong>
       {% if waking %}{{ wol_badge("waking") }}
       {% elif last_wol %}<div class="muted small">Ultima pornire: {{ ago(last_wol.created_at) }} · {{ wol_badge(last_wol.result) or last_wol.result }}</div>{% endif %}
-      <div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>
+      {% if viewer(request).is_admin %}<div class="small"><a href="/schedules">{{ icon("calendar-clock") }} Programări</a></div>{% endif %}
     </div>
     {% if device.status != "online" and not waking %}
     <form method="post" action="/devices/{{ device.id }}/wake">{{ csrf() }}<button class="primary">{{ icon("power") }} Pornește</button></form>
@@ -52,12 +52,14 @@
 </div>
 
 <div class="card-grid">
+{% if viewer(request).is_admin %}
 <form method="post" action="/devices/{{ device.id }}" class="card">
   <h2>{{ icon("pencil") }} Editare</h2>
   {{ csrf() }}
   {{ device_fields(form, rooms, types) }}
   <button class="primary">{{ icon("check") }} Salvează</button>
 </form>
+{% endif %}
 
 <section class="card" id="history" hx-get="/devices/{{ device.id }}" hx-trigger="lanmon:changed from:body" hx-select="#history" hx-swap="outerHTML">
   <h2>Istoric</h2>
@@ -69,8 +71,10 @@
 </section>
 </div>
 
+{% if viewer(request).is_admin %}
 <form method="post" action="/devices/{{ device.id }}/delete" onsubmit="return confirm('Ștergi „{{ device.name }}”?')">
   {{ csrf() }}
   <button class="danger">{{ icon("trash-2") }} Șterge dispozitivul</button>
 </form>
+{% endif %}
 {% endblock %}

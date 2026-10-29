@@ -13,7 +13,7 @@ from app.db.models import User
 from app.db.settings_store import get_int, get_str, set_value
 from app.security import MIN_PASSWORD_LENGTH, hash_password, verify_password
 from app.services.notifier import load_config
-from app.web.deps import current_user, flash, get_db, login_session, redirect, templates
+from app.web.deps import admin_user, current_user, flash, get_db, login_session, redirect, templates
 
 router = APIRouter()
 
@@ -93,7 +93,7 @@ async def settings_page(
 
 @router.post("/settings")
 async def save_settings(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     form = await request.form()
     errors = []
@@ -131,7 +131,7 @@ async def save_settings(
 
 @router.post("/settings/notifications")
 async def save_notifications(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     form = await request.form()
     values = {key: str(form.get(key, "")).strip() for key in NOTIFY_FIELDS + NOTIFY_SECRETS}
@@ -171,7 +171,7 @@ async def save_notifications(
 
 @router.post("/settings/notifications/test")
 async def test_notifications(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     config = load_config(db)
     if not config.channels:
@@ -212,7 +212,7 @@ async def change_password(
 
 
 @router.get("/settings/backup")
-async def download_backup(request: Request, user: User = Depends(current_user)) -> Response:
+async def download_backup(request: Request, user: User = Depends(admin_user)) -> Response:
     settings = request.app.state.settings
     stamp = datetime.now().strftime("%Y%m%d-%H%M")
     tmp = settings.data_dir / "backups" / f".descarcare-{stamp}.db"

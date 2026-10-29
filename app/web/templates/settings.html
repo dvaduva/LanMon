@@ -5,6 +5,7 @@
 <h1>Setări</h1>
 
 <div class="card-grid">
+{% if user.is_admin %}
 <form method="post" action="/settings" class="card">
   <h2>{{ icon("radar") }} Rețea și intervale</h2>
   {{ csrf() }}
@@ -73,6 +74,7 @@
   </form>
 </section>
 
+{% endif %}
 <form method="post" action="/settings/password" class="card">
   <h2>{{ icon("key") }} Schimbă parola</h2>
   <p class="muted small">Autentificat ca <strong>{{ user.username }}</strong>.</p>
@@ -82,6 +84,13 @@
   <label>Confirmă parola nouă <input type="password" name="confirm" required minlength="8" autocomplete="new-password"></label>
   <button class="primary">{{ icon("key") }} Schimbă parola</button>
 </form>
+
+{% if user.is_admin %}
+<section class="card">
+  <h2>{{ icon("users") }} Utilizatori</h2>
+  <p class="muted small">Conturi pentru familie: membrii văd și pornesc doar dispozitivele din camerele permise.</p>
+  <a class="button" href="/users">{{ icon("users") }} Utilizatori</a>
+</section>
 
 <section class="card">
   <h2>{{ icon("calendar-clock") }} Programări WOL</h2>
@@ -99,6 +108,7 @@
   <h2>{{ icon("eye-off") }} Dispozitive ignorate</h2>
   <p class="muted small">Le poți reactiva din <a href="/unassigned">Neasignate</a>, secțiunea „Ignorate”.</p>
 </section>
+{% endif %}
 </div>
 
 <form method="post" action="/logout">

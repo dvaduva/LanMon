@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Device, Discovered, User
 from app.mac import is_random_mac, normalize_mac
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, flash, get_db, redirect, templates
 from app.web.forms import DeviceForm, choices
 
 router = APIRouter(prefix="/unassigned")
@@ -35,7 +35,7 @@ def suggested_name(entry: Discovered) -> str:
 
 @router.get("")
 def unassigned(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     order = (Discovered.last_seen_at.desc(),)
     context = {
@@ -48,7 +48,7 @@ def unassigned(
 
 @router.get("/{mac}/add")
 def add_form(
-    mac: str, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    mac: str, request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     entry = _get(db, mac)
     if entry is None:
@@ -60,7 +60,7 @@ def add_form(
 
 @router.post("/{mac}/add")
 async def add(
-    mac: str, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    mac: str, request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     entry = _get(db, mac)
     if entry is None:
@@ -89,14 +89,14 @@ async def add(
 
 @router.post("/{mac}/ignore")
 def ignore(
-    mac: str, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    mac: str, request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     return _set_ignored(request, db, mac, True)
 
 
 @router.post("/{mac}/restore")
 def restore(
-    mac: str, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    mac: str, request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     return _set_ignored(request, db, mac, False)
 

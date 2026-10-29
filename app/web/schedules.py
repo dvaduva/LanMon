@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Device, Room, Schedule, User
 from app.services.scheduler import WEEKDAYS
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, flash, get_db, redirect, templates
 
 router = APIRouter(prefix="/schedules")
 
@@ -45,14 +45,14 @@ def _render(request: Request, db: Session, status_code: int = 200, **extra) -> R
 
 @router.get("")
 def index(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     return _render(request, db)
 
 
 @router.post("")
 async def create(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     form = await request.form()
     target = str(form.get("target", ""))
@@ -84,7 +84,7 @@ async def create(
 def toggle(
     schedule_id: int,
     request: Request,
-    user: User = Depends(current_user),
+    user: User = Depends(admin_user),
     db: Session = Depends(get_db),
 ) -> Response:
     schedule = db.get(Schedule, schedule_id)
@@ -98,7 +98,7 @@ def toggle(
 def delete(
     schedule_id: int,
     request: Request,
-    user: User = Depends(current_user),
+    user: User = Depends(admin_user),
     db: Session = Depends(get_db),
 ) -> Response:
     schedule = db.get(Schedule, schedule_id)

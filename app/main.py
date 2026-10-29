@@ -31,12 +31,13 @@ from app.web import (
     live,
     schedules,
     unassigned,
+    users,
     wol,
 )
 from app.web import (
     settings as settings_page,
 )
-from app.web.deps import CsrfError, Redirect, redirect, templates, verify_csrf
+from app.web.deps import CsrfError, Forbidden, Redirect, redirect, templates, verify_csrf
 from app.web.health import router as health_router
 
 log = logging.getLogger("lanmon")
@@ -126,7 +127,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.login_limiter = LoginLimiter()
     app.include_router(health_router)
-    for module in (auth, dashboard, unassigned, devices, wol, live, settings_page, schedules):
+    for module in (
+        auth,
+        dashboard,
+        unassigned,
+        devices,
+        wol,
+        live,
+        settings_page,
+        schedules,
+        users,
+    ):
         app.include_router(module.router)
     for router in catalog.routers:
         app.include_router(router)
@@ -139,6 +150,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(Redirect)
     async def on_redirect(request: Request, exc: Redirect) -> Response:
         return redirect(request, exc.url)
+
+    @app.exception_handler(Forbidden)
+    async def on_forbidden(request: Request, exc: Forbidden) -> Response:
+        return templates.TemplateResponse(
+            request, "error.html", {"message": "Nu ai acces la această pagină."}, 403
+        )
 
     @app.exception_handler(CsrfError)
     async def on_csrf_error(request: Request, exc: CsrfError) -> Response:

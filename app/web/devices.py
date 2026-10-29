@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import ActionLog, Device, StatusEvent, User
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import Forbidden, admin_user, current_user, flash, get_db, redirect, templates
 from app.web.forms import DeviceForm, choices
 
 router = APIRouter(prefix="/devices")
@@ -44,6 +44,8 @@ def detail(
     device = db.get(Device, device_id)
     if device is None:
         return redirect(request, "/")
+    if not user.can_see(device):
+        raise Forbidden
     form = DeviceForm(
         name=device.name,
         room_id=device.room_id,
@@ -60,7 +62,7 @@ def detail(
 async def update(
     device_id: int,
     request: Request,
-    user: User = Depends(current_user),
+    user: User = Depends(admin_user),
     db: Session = Depends(get_db),
 ) -> Response:
     device = db.get(Device, device_id)
@@ -81,7 +83,7 @@ async def update(
 def delete(
     device_id: int,
     request: Request,
-    user: User = Depends(current_user),
+    user: User = Depends(admin_user),
     db: Session = Depends(get_db),
 ) -> Response:
     device = db.get(Device, device_id)

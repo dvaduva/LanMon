@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Device, DeviceType, Room, User
 from app.icons import ROOM_ICONS, TYPE_ICONS
 from app.services.portcheck import format_ports, parse_ports
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import admin_user, flash, get_db, redirect, templates
 
 
 @dataclass(frozen=True)
@@ -66,13 +66,13 @@ def make_router(c: Catalog) -> APIRouter:
 
     @router.get("")
     def index(
-        request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+        request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
     ) -> Response:
         items = db.scalars(select(c.model).order_by(c.model.sort_order, c.model.name)).all()
         return render(request, "catalog_list.html", items=items, usage=usage(db))
 
     @router.get("/new")
-    def new(request: Request, user: User = Depends(current_user)) -> Response:
+    def new(request: Request, user: User = Depends(admin_user)) -> Response:
         return render(
             request,
             "catalog_form.html",
@@ -90,7 +90,7 @@ def make_router(c: Catalog) -> APIRouter:
         icon: str = Form(""),
         sort_order: int = Form(0),
         check_ports: str = Form(""),
-        user: User = Depends(current_user),
+        user: User = Depends(admin_user),
         db: Session = Depends(get_db),
     ) -> Response:
         name = name.strip()
@@ -120,7 +120,7 @@ def make_router(c: Catalog) -> APIRouter:
     def edit(
         item_id: int,
         request: Request,
-        user: User = Depends(current_user),
+        user: User = Depends(admin_user),
         db: Session = Depends(get_db),
     ) -> Response:
         item = db.get(c.model, item_id)
@@ -145,7 +145,7 @@ def make_router(c: Catalog) -> APIRouter:
         icon: str = Form(""),
         sort_order: int = Form(0),
         check_ports: str = Form(""),
-        user: User = Depends(current_user),
+        user: User = Depends(admin_user),
         db: Session = Depends(get_db),
     ) -> Response:
         item = db.get(c.model, item_id)
@@ -180,7 +180,7 @@ def make_router(c: Catalog) -> APIRouter:
     def delete(
         item_id: int,
         request: Request,
-        user: User = Depends(current_user),
+        user: User = Depends(admin_user),
         db: Session = Depends(get_db),
     ) -> Response:
         item = db.get(c.model, item_id)

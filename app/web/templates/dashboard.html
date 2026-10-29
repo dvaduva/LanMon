@@ -10,10 +10,12 @@
       <button type="button" data-view-toggle="list" title="Listă" aria-pressed="true">{{ icon("list") }}<span class="sr">Listă</span></button>
       <button type="button" data-view-toggle="tiles" title="Tile-uri" aria-pressed="false">{{ icon("layout-grid") }}<span class="sr">Tile-uri</span></button>
     </div>
+    {% if viewer(request).is_admin %}
     <form method="post" action="/scan">
       {{ csrf() }}
       <button title="Scanează acum">{{ icon("radar") }}<span class="wide-only">Scanează acum</span></button>
     </form>
+    {% endif %}
   </div>
 </div>
 {# Aplicat înainte de afișare, ca să nu clipească lista înainte de tile-uri. #}

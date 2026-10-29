@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.models import ActionLog, Device, Room, User
-from app.web.deps import current_user, flash, get_db, redirect, templates
+from app.web.deps import Forbidden, admin_user, current_user, flash, get_db, redirect, templates
 
 router = APIRouter()
 
@@ -52,6 +52,8 @@ async def wake_device(
     device = db.get(Device, device_id)
     if device is None:
         return redirect(request, "/")
+    if not user.can_see(device):
+        raise Forbidden
     if not device.wol_enabled:
         flash(request, f"„{device.name}” nu are Wake-on-LAN activat.", "error")
     elif await request.app.state.waker.wake([device.id], source="user"):
@@ -75,6 +77,8 @@ async def wake_room(
     room = db.get(Room, room_id)
     if room is None:
         return redirect(request, "/")
+    if not user.is_admin and room not in user.rooms:
+        raise Forbidden
     ids = db.scalars(
         select(Device.id).where(
             Device.room_id == room.id, Device.wol_enabled.is_(True), Device.status == "offline"
@@ -93,7 +97,7 @@ async def wake_room(
 
 @router.get("/log")
 def action_log(
-    request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)
+    request: Request, user: User = Depends(admin_user), db: Session = Depends(get_db)
 ) -> Response:
     entries = db.scalars(
         select(ActionLog)
