@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, icon with context %}
+{% from "_macros.html" import csrf, icon, view_toggle with context %}
 {% block title %}{{ _("Unassigned") }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -7,12 +7,15 @@
     <h1>{{ _("Unassigned") }}</h1>
     <p class="muted">{{ _("Devices found by the scanner and not saved yet.") }}</p>
   </div>
-  <form method="post" action="/scan">{{ csrf() }}<button>{{ icon("radar") }} {{ _("Scan now") }}</button></form>
+  <div class="head-actions">
+    <form method="post" action="/scan">{{ csrf() }}<button title="{{ _("Scan now") }}">{{ icon("radar") }}<span class="wide-only">{{ _("Scan now") }}</span></button></form>
+    {{ view_toggle("lanmon:view:unassigned") }}
+  </div>
 </div>
 {% if not entries %}
 <div class="card empty"><p>{{ _("Nothing new. Every device found is saved or ignored.") }}</p></div>
 {% endif %}
-<ul class="list">
+<ul class="list tileable">
   {% for e in entries %}
   <li class="card row">
     <div class="grow">

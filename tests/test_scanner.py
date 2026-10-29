@@ -2,6 +2,7 @@ import asyncio
 import ipaddress
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from sqlalchemy import select
 
 from app.db.models import ActionLog, Device, Discovered
@@ -150,6 +151,24 @@ def test_dashboard_rooms_are_collapsible(admin):
     assert "<summary>" in page
 
 
-def test_dashboard_has_list_and_tiles_toggle(admin):
+def test_dashboard_buttons_order(admin):
     page = admin.get("/").text
     assert 'data-view-toggle="list"' in page and 'data-view-toggle="tiles"' in page
+    assert page.index('href="/uptime"') < page.index('action="/scan"') < page.index("data-view-key")
+
+
+@pytest.mark.parametrize(
+    ("path", "key", "default"),
+    [
+        ("/", "lanmon:view", "list"),
+        ("/unassigned", "lanmon:view:unassigned", "list"),
+        ("/rooms", "lanmon:view:rooms", "list"),
+        ("/types", "lanmon:view:types", "list"),
+        ("/log", "lanmon:view:log", "list"),
+        ("/settings", "lanmon:view:settings", "tiles"),
+    ],
+)
+def test_pages_have_remembered_view_toggle(admin, path, key, default):
+    page = admin.get(path).text
+    assert f'data-view-key="{key}" data-view-default="{default}"' in page
+    assert f'localStorage.getItem("{key}")' in page

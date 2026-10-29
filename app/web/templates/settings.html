@@ -1,10 +1,13 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, icon with context %}
+{% from "_macros.html" import ago, csrf, icon, view_toggle with context %}
 {% block title %}{{ _("Settings") }} · LanMon{% endblock %}
 {% block content %}
-<h1>{{ _("Settings") }}</h1>
+<div class="page-head">
+  <h1>{{ _("Settings") }}</h1>
+  {{ view_toggle("lanmon:view:settings", "tiles") }}
+</div>
 
-<div class="card-grid">
+<div class="card-grid tileable">
 {% if user.is_admin %}
 <form method="post" action="/settings" class="card">
   <h2>{{ icon("radar") }} {{ _("Network and intervals") }}</h2>

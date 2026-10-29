@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, icon with context %}
+{% from "_macros.html" import csrf, icon, view_toggle with context %}
 {% block title %}{{ _(catalog.title) }} · LanMon{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -7,17 +7,18 @@
   <div class="actions">
     {% for other in catalogs if other.path != catalog.path %}<a class="button" href="{{ other.path }}">{{ icon("tag" if other.path == "/types" else "house") }} {{ _(other.title) }}</a>{% endfor %}
     <a class="button primary" href="{{ catalog.path }}/new">{{ icon("plus") }} {{ _("Add") }}</a>
+    {{ view_toggle("lanmon:view:" ~ catalog.path.strip("/")) }}
   </div>
 </div>
 {% if not items %}<div class="card empty"><p>{{ _("Nothing yet.") }}</p></div>{% endif %}
-<ul class="list">
+<ul class="list tileable">
   {% for item in items %}
   <li class="card">
     <a class="row link" href="{{ catalog.path }}/{{ item.id }}">
       {{ icon(item.icon) }}
       <span class="grow">{{ type_name(item) }}</span>
       <span class="muted small">{{ ngettext("{n} device", "{n} devices", usage.get(item.id, 0)) }}</span>
-      {{ icon("chevron-right") }}
+      {{ icon("chevron-right", "chevron") }}
     </a>
   </li>
   {% endfor %}

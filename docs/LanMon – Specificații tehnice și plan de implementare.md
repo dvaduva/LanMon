@@ -253,6 +253,7 @@ Livrabile:
 
 - [x] Camere colapsabile pe Dashboard; starea se păstrează în browser.
 - [x] Dashboard afișat ca listă sau ca tile-uri, la alegere.
+- [x] Comutatorul Listă / Dale și pe Neasignate, Camere, Tipuri, Jurnal și Setări; alegerea se păstrează în browser, separat pentru fiecare pagină. Pe Dashboard butoanele sunt în ordinea Disponibilitate, Scanează acum, Listă / Dale.
 - [x] Layout pe toată lățimea ecranului; pe ecrane late, cardurile din Setări și din fișă stau pe coloane.
 - [x] Rulare locală pe Windows: date implicit în `./data`, mesaj clar (fără traceback) când lipsește Npcap, teste stabile pe Windows.
 - [x] Npcap instalat pe PC-ul de dezvoltare.

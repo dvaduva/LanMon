@@ -128,3 +128,13 @@
   <li>{{ _("If it started but shows as offline: the Windows firewall blocks ping (the “Echo Request – ICMPv4-In” rule).") }}</li>
 </ul>
 {%- endmacro %}
+
+{# List / tiles switch; the choice is remembered per page in the browser (key = storage key). #}
+{% macro view_toggle(key, default="list") -%}
+<div class="segmented" role="group" aria-label="{{ _("View") }}" data-view-key="{{ key }}" data-view-default="{{ default }}">
+  <button type="button" data-view-toggle="list" title="{{ _("List") }}" aria-pressed="{{ 'true' if default == 'list' else 'false' }}">{{ icon("list") }}<span class="sr">{{ _("List") }}</span></button>
+  <button type="button" data-view-toggle="tiles" title="{{ _("Tiles") }}" aria-pressed="{{ 'true' if default == 'tiles' else 'false' }}">{{ icon("layout-grid") }}<span class="sr">{{ _("Tiles") }}</span></button>
+</div>
+{# Applied before rendering so the page doesn't flash in the other view. #}
+<script>try { document.documentElement.dataset.view = localStorage.getItem("{{ key }}") || "{{ default }}"; } catch (e) { document.documentElement.dataset.view = "{{ default }}"; }</script>
+{%- endmacro %}

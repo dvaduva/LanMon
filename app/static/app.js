@@ -39,28 +39,28 @@ document.addEventListener("toggle", (e) => {
   } catch {}
 }, true);
 
-// Dashboard: list or tiles, the choice is kept in the browser.
-const VIEW_KEY = "lanmon:view";
+// List or tiles: the choice is kept in the browser, per page (data-view-key).
 function applyView(view) {
-  if (view === "tiles") document.documentElement.dataset.view = "tiles";
-  else delete document.documentElement.dataset.view;
+  document.documentElement.dataset.view = view;
   for (const b of document.querySelectorAll("[data-view-toggle]")) {
-    b.setAttribute("aria-pressed", String(b.dataset.viewToggle === (view || "list")));
+    b.setAttribute("aria-pressed", String(b.dataset.viewToggle === view));
   }
 }
 document.addEventListener("DOMContentLoaded", () => {
+  const group = document.querySelector("[data-view-key]");
+  if (!group) return;
   let view = null;
   try {
-    view = localStorage.getItem(VIEW_KEY);
+    view = localStorage.getItem(group.dataset.viewKey);
   } catch {}
-  applyView(view);
+  applyView(view === "tiles" || view === "list" ? view : group.dataset.viewDefault);
 });
 document.addEventListener("click", (e) => {
   const button = e.target.closest && e.target.closest("[data-view-toggle]");
   if (!button) return;
   applyView(button.dataset.viewToggle);
   try {
-    localStorage.setItem(VIEW_KEY, button.dataset.viewToggle);
+    localStorage.setItem(button.closest("[data-view-key]").dataset.viewKey, button.dataset.viewToggle);
   } catch {}
 });
 

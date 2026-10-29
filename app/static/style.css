@@ -222,6 +222,19 @@ details.ignored li { padding: .5rem 0; border-top: 1px solid var(--border); }
 [data-view="tiles"] .devices .label, [data-view="tiles"] .devices .ip { flex-basis: 100%; }
 [data-view="tiles"] .devices .name { font-weight: 600; }
 [data-view="tiles"] .devices form { position: absolute; top: .35rem; right: .35rem; margin: 0; }
+/* Other pages: lists (.tileable) become a grid of cards; settings go to one column in list view. */
+[data-view="tiles"] .list.tileable { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: .6rem; align-items: stretch; }
+[data-view="tiles"] .list.tileable > .card { margin: 0; }
+[data-view="tiles"] .list.tileable > .card.row { flex-direction: column; align-items: stretch; }
+[data-view="tiles"] .list.tileable > .card.row .actions { margin-top: auto; }
+[data-view="tiles"] .list.tileable .row.link { flex-direction: column; align-items: flex-start; gap: .4rem; height: 100%; }
+[data-view="tiles"] .list.tileable .row.link > .icon:first-child { width: 1.6rem; height: 1.6rem; }
+[data-view="tiles"] .list.tileable .row.link .grow { font-weight: 600; }
+[data-view="tiles"] .list.tileable .chevron { display: none; }
+[data-view="tiles"] .list.tileable > .card > .row:not(.link) { flex-wrap: wrap; justify-content: space-between; }
+[data-view="tiles"] .list.tileable > .card > .row:not(.link) > .grow { flex-basis: 100%; order: 1; }
+[data-view="list"] .card-grid.tileable { grid-template-columns: minmax(0, 44rem); }
 textarea.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; word-break: break-all; }
 .notice { border: 1px solid var(--online); border-radius: .5rem; padding: .5rem .75rem; margin-bottom: .75rem; }
 .languages { text-align: center; margin-top: 1rem; }

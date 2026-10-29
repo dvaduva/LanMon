@@ -1,11 +1,16 @@
 {% extends "base.html" %}
-{% from "_macros.html" import ago, csrf, icon, shutdown_badge, wol_badge, wol_hints with context %}
+{% from "_macros.html" import ago, csrf, icon, shutdown_badge, view_toggle, wol_badge, wol_hints with context %}
 {% block title %}{{ _("Log") }} · LanMon{% endblock %}
 {% block content %}
-<h1>{{ _("Log") }}</h1>
-<p class="muted">{{ _("Wake-on-LAN wake-ups, remote shutdowns and manual scans, newest first.") }}</p>
+<div class="page-head">
+  <div>
+    <h1>{{ _("Log") }}</h1>
+    <p class="muted">{{ _("Wake-on-LAN wake-ups, remote shutdowns and manual scans, newest first.") }}</p>
+  </div>
+  {{ view_toggle("lanmon:view:log") }}
+</div>
 {% if not entries %}<div class="card empty"><p>{{ _("No actions yet.") }}</p></div>{% endif %}
-<ul class="list">
+<ul class="list tileable">
   {% for e in entries %}
   <li class="card">
     <div class="row">
