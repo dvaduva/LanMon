@@ -21,6 +21,58 @@
   <button class="primary">{{ icon("check") }} Salvează</button>
 </form>
 
+<section class="card">
+  <h2>{{ icon("bell") }} Notificări</h2>
+  <p class="muted small">{% if notify_channels %}Active pe {{ notify_channels|join(" și ") }}.{% else %}Niciun canal configurat încă.{% endif %}
+    Dispozitivele pentru care primești „oprit” se aleg din fișa fiecăruia.</p>
+  <form method="post" action="/settings/notifications">
+    {{ csrf() }}
+    <fieldset>
+      <legend>Telegram</legend>
+      <label>Token bot
+        <input type="password" name="notify_telegram_token" autocomplete="off" placeholder="{{ 'neschimbat' if notify.notify_telegram_token else '123456:ABC…' }}">
+        <small class="muted">De la @BotFather. Gol = rămâne cel salvat.</small>
+      </label>
+      <label>Chat ID
+        <input name="notify_telegram_chat" value="{{ notify.notify_telegram_chat }}" autocomplete="off" placeholder="ex. 123456789">
+        <small class="muted">Gol = Telegram dezactivat.</small>
+      </label>
+    </fieldset>
+    <fieldset>
+      <legend>Email (SMTP)</legend>
+      <label>Server <input name="notify_email_host" value="{{ notify.notify_email_host }}" autocomplete="off" placeholder="ex. smtp.gmail.com"></label>
+      <div class="row-fields">
+        <label>Port <input name="notify_email_port" value="{{ notify.notify_email_port }}" inputmode="numeric" placeholder="587"></label>
+        <label>Securitate
+          <select name="notify_email_security">
+            {% for key, label in email_security.items() %}<option value="{{ key }}" {{ "selected" if notify.notify_email_security == key }}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <label>Utilizator <input name="notify_email_user" value="{{ notify.notify_email_user }}" autocomplete="off"></label>
+      <label>Parolă
+        <input type="password" name="notify_email_password" autocomplete="new-password" placeholder="{{ 'neschimbată' if notify.notify_email_password else '' }}">
+        <small class="muted">Pentru Gmail folosește o „parolă de aplicație”.</small>
+      </label>
+      <label>De la <input name="notify_email_from" value="{{ notify.notify_email_from }}" autocomplete="off" placeholder="implicit: destinatarul"></label>
+      <label>Către <input type="email" name="notify_email_to" value="{{ notify.notify_email_to }}" autocomplete="off"></label>
+    </fieldset>
+    <fieldset>
+      <legend>Când</legend>
+      <label>Dispozitiv oprit de cel puțin (minute)
+        <input type="number" name="notify_offline_min" value="{{ notify.notify_offline_min or 10 }}" min="1" max="1440" required>
+      </label>
+      <label class="check"><input type="checkbox" name="notify_new_device" {{ "checked" if notify.notify_new_device }}><span>Dispozitiv nou necunoscut în rețea</span></label>
+      <label class="check"><input type="checkbox" name="notify_wol_failed" {{ "checked" if notify.notify_wol_failed }}><span>Pornire WOL eșuată</span></label>
+    </fieldset>
+    <button class="primary">{{ icon("check") }} Salvează</button>
+  </form>
+  <form method="post" action="/settings/notifications/test" class="inline">
+    {{ csrf() }}
+    <button {{ "disabled" if not notify_channels }}>{{ icon("send") }} Trimite un mesaj de test</button>
+  </form>
+</section>
+
 <form method="post" action="/settings/password" class="card">
   <h2>{{ icon("key") }} Schimbă parola</h2>
   <p class="muted small">Autentificat ca <strong>{{ user.username }}</strong>.</p>

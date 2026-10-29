@@ -98,6 +98,21 @@ după restartul containerului. Tot acolo: schimbarea parolei și backup-ul.
 
 Istoricul de stare și jurnalul de acțiuni păstrează 90 de zile; curățarea rulează noaptea la 03:30.
 
+## Notificări
+
+Setări → Notificări. Canale:
+
+- **Telegram:** creează un bot cu @BotFather și copiază token-ul. Trimite-i botului un mesaj,
+  apoi deschide `https://api.telegram.org/bot<TOKEN>/getUpdates`; numărul din `"chat":{"id":…}`
+  e Chat ID-ul.
+- **Email:** orice server SMTP. Pentru Gmail: `smtp.gmail.com`, port 587, STARTTLS și o
+  [parolă de aplicație](https://myaccount.google.com/apppasswords).
+
+Butonul „Trimite un mesaj de test” verifică imediat configurarea. Reguli: un dispozitiv cu
+„Notifică-mă când e oprit” bifat în fișă e oprit de mai mult de pragul setat (și când revine),
+un dispozitiv nou necunoscut apare în rețea, o pornire WOL eșuează. Token-ul și parola stau în
+baza de date din `/data`, deci și în backup.
+
 ## Backup și restaurare
 
 - **Manual:** Setări → „Descarcă backup” salvează o copie completă `lanmon-<data>.db` (dispozitive,

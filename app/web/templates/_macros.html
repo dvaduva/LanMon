@@ -45,6 +45,10 @@
   <input type="checkbox" name="wol_enabled" {{ "checked" if form.wol_enabled }}>
   <span>Suportă Wake-on-LAN<br><small class="muted">Recomandat doar pentru dispozitive pe cablu.</small></span>
 </label>
+<label class="check">
+  <input type="checkbox" name="notify" {{ "checked" if form.notify }}>
+  <span>Notifică-mă când e oprit<br><small class="muted">Pragul și canalele se setează în Setări → Notificări.</small></span>
+</label>
 <label>Note
   <textarea name="notes" rows="2">{{ form.notes }}</textarea>
 </label>

@@ -57,6 +57,8 @@ PROTECTED = [
     ("GET", "/settings"),
     ("POST", "/settings"),
     ("POST", "/settings/password"),
+    ("POST", "/settings/notifications"),
+    ("POST", "/settings/notifications/test"),
     ("GET", "/settings/backup"),
     ("GET", "/unassigned"),
     ("GET", "/unassigned/aa:bb:cc:dd:ee:ff/add"),

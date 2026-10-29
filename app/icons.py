@@ -44,6 +44,8 @@ TYPE_ICONS = [
 UI_ICONS = [
     "layout-dashboard",
     "layout-grid",
+    "bell",
+    "send",
     "inbox",
     "tag",
     "key",

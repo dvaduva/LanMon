@@ -17,6 +17,7 @@ from app.db.settings_store import get_str
 from app.events import EventBus
 from app.security import LoginLimiter
 from app.services.netinfo import resolve_network
+from app.services.notifier import Notifier, deliver
 from app.services.pinger import Pinger
 from app.services.retention import run_nightly
 from app.services.scanner import Scanner
@@ -67,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 asyncio.create_task(app.state.scanner.run(), name="scanner"),
                 asyncio.create_task(app.state.pinger.run(), name="pinger"),
                 asyncio.create_task(run_nightly(app.state.session_factory), name="retention"),
+                asyncio.create_task(app.state.notifier.run(), name="notifier"),
             ]
         yield
         for task in tasks:
@@ -113,6 +115,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory,
         app.state.events,
         extra_arp=lambda: {mac: seen.ip for mac, seen in app.state.scanner.seen.items()},
+    )
+    app.state.notify_send = deliver
+    app.state.notifier = Notifier(
+        app.state.session_factory, app.state.events, send=lambda *a: app.state.notify_send(*a)
     )
     app.state.login_limiter = LoginLimiter()
     app.include_router(health_router)

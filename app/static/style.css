@@ -82,6 +82,8 @@ main { margin: 0; padding: 1rem clamp(1rem, 2vw, 2rem); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1rem; margin-bottom: 1rem; }
 /* Pe ecrane late, cardurile cu formulare stau unul lângă altul în loc să se întindă. */
+.row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 .75rem; }
+form.inline { margin-top: .75rem; }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 28rem), 1fr));
   gap: 0 1rem; align-items: start; }
 .card.narrow { max-width: 380px; margin: 12vh auto 0; }

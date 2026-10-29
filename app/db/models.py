@@ -69,6 +69,8 @@ class Device(Base):
     status_changed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     is_random_mac: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str | None] = mapped_column(Text)
+    # Notificare când stă oprit mai mult de pragul din Setări (și când revine).
+    notify: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow)
 
     room: Mapped[Room | None] = relationship(back_populates="devices")

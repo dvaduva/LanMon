@@ -12,6 +12,7 @@ class DeviceForm:
     room_id: int | None = None
     type_id: int | None = None
     wol_enabled: bool = False
+    notify: bool = False
     notes: str = ""
 
     @classmethod
@@ -21,6 +22,7 @@ class DeviceForm:
             room_id=_int_or_none(form.get("room_id")),
             type_id=_int_or_none(form.get("type_id")),
             wol_enabled=form.get("wol_enabled") == "on",
+            notify=form.get("notify") == "on",
             notes=str(form.get("notes", "")).strip(),
         )
 
@@ -40,6 +42,7 @@ class DeviceForm:
         device.room_id = self.room_id
         device.type_id = self.type_id
         device.wol_enabled = self.wol_enabled
+        device.notify = self.notify
         device.notes = self.notes or None
 
 

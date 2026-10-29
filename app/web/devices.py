@@ -49,6 +49,7 @@ def detail(
         room_id=device.room_id,
         type_id=device.type_id,
         wol_enabled=device.wol_enabled,
+        notify=device.notify,
         notes=device.notes or "",
     )
     return templates.TemplateResponse(request, "device.html", _context(request, db, device, form))
