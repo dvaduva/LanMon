@@ -182,7 +182,7 @@ Livrabile:
 
 Criterii de acceptanță:
 
-- [ ] Containerul rulează pe QNAP din imaginea GHCR și `/health` răspunde. *(de verificat pe QNAP, la final)*
+- [x] Containerul rulează pe QNAP din imaginea GHCR și `/health` răspunde. *(verificat pe QNAP, v1.0.1, 2026-10-30)*
 - [ ] Scriptul de test găsește dispozitivele prin ARP și primește răspuns la ping din container. *(de verificat pe QNAP, la final)*
 - [ ] Un PC oprit pornește cu pachetul WOL trimis din container. *(de verificat pe QNAP, la final)*
 - [ ] `/health` răspunde de pe telefon, prin Tailscale, cu Wi-Fi-ul oprit. *(de verificat pe QNAP, la final)*
