@@ -31,3 +31,21 @@ def test_pick_network_with_explicit_interface():
 def test_pick_network_without_default_route():
     with pytest.raises(RuntimeError):
         pick_network(ROUTES[1:])
+
+
+def test_pick_network_falls_back_to_interface_netmask():
+    # QTS keeps the subnet route in a per-interface table: only the default route is visible.
+    routes = [(0, 0, "192.168.1.1", "br0", "192.168.1.5", 0)]
+    with pytest.raises(RuntimeError):
+        pick_network(routes)
+    info = pick_network(routes, netmask=lambda iface: "255.255.255.0" if iface == "br0" else None)
+    assert info.interface == "br0"
+    assert str(info.address) == "192.168.1.5/24"
+    assert info.broadcast == "192.168.1.255"
+
+
+def test_interface_netmask_reads_the_kernel():
+    from app.services.netinfo import interface_netmask
+
+    assert interface_netmask("lo") in ("255.0.0.0", None)
+    assert interface_netmask("no-such-iface0") is None
