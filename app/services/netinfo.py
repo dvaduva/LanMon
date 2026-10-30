@@ -57,16 +57,21 @@ def pick_network(
             raise RuntimeError("No default route found; set LANMON_INTERFACE.")
         interface = min(defaults, key=lambda r: r[5])[3]
 
+    # QTS lists the subnet route with source 0.0.0.0; the address is on the interface's other
+    # routes (e.g. its own /32).
+    addresses = [r[4] for r in routes if r[3] == interface and r[4] not in ("0.0.0.0", "")]
     for net, mask, gateway, iface, addr, _metric in routes:
         if iface != interface or mask == 0 or gateway != "0.0.0.0":
             continue
         if net == 0 or mask == 0xFFFFFFFF:
             continue
-        address = ipaddress.IPv4Interface(f"{addr}/{_ltoa(mask)}")
-        if address.network.network_address == ipaddress.IPv4Address(net):
-            return NetInfo(interface=interface, address=address)
+        for candidate in [addr, *addresses]:
+            if candidate in ("0.0.0.0", ""):
+                continue
+            address = ipaddress.IPv4Interface(f"{candidate}/{_ltoa(mask)}")
+            if address.network.network_address == ipaddress.IPv4Address(net):
+                return NetInfo(interface=interface, address=address)
 
-    addresses = [r[4] for r in routes if r[3] == interface and r[4] not in ("0.0.0.0", "")]
     mask = netmask(interface)
     if addresses and mask:
         return NetInfo(interface, ipaddress.IPv4Interface(f"{addresses[0]}/{mask}"))

@@ -49,3 +49,19 @@ def test_interface_netmask_reads_the_kernel():
 
     assert interface_netmask("lo") in ("255.0.0.0", None)
     assert interface_netmask("no-such-iface0") is None
+
+
+def test_pick_network_on_qts_routes():
+    # Copied from a QNAP: the subnet route has source 0.0.0.0, the /32 routes carry the address.
+    routes = [
+        (0, 0, "192.168.1.1", "br0", "0.0.0.0", 100),
+        (_ip("10.0.5.0"), _ip("255.255.255.0"), "0.0.0.0", "docker0", "10.0.5.1", 0),
+        (_ip("192.168.1.0"), _ip("255.255.255.255"), "0.0.0.0", "br0", "192.168.1.5", 0),
+        (_ip("192.168.1.0"), _ip("255.255.255.0"), "0.0.0.0", "br0", "0.0.0.0", 0),
+        (_ip("192.168.1.255"), _ip("255.255.255.255"), "0.0.0.0", "br0", "192.168.1.5", 0),
+        (_ip("192.168.1.5"), _ip("255.255.255.255"), "0.0.0.0", "br0", "192.168.1.5", 0),
+    ]
+    info = pick_network(routes)
+    assert info.interface == "br0"
+    assert str(info.address) == "192.168.1.5/24"
+    assert info.broadcast == "192.168.1.255"
